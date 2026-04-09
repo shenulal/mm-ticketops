@@ -178,6 +178,22 @@ const INITIAL_VENDOR_EVENT_BRIDGES: VendorEventBridge[] = [
   { id: 'veb2', vendorId: 'vnd2', eventId: 'evt2', platformUrl: 'https://viagogo.com/f1sgp', loginEmail: 'j.meester@viagogo.com', credentialHint: 'F1 vendor login', primaryContactForEvent: 'J. Meester', notes: '', isActive: true },
 ];
 
+const INITIAL_VENDOR_CREDENTIALS: VendorCredential[] = [
+  { id: 'vc1', vendorId: 'vnd1', eventId: 'evt1', loginId: 'clara.wc2026', email: 'clara@poxami.com', passwordHash: 'P@ssw0rd!2026', active: true, notes: 'FIFA WC 2026 portal', updatedBy: 'Alex Thompson', updatedAt: '2026-03-15T10:30:00Z', createdAt: '2026-01-10T09:00:00Z' },
+  { id: 'vc2', vendorId: 'vnd1', eventId: null, loginId: 'poxami.global', email: 'ops@poxami.com', passwordHash: 'Gl0b@lAcc#99', active: true, notes: 'Global account for all events', updatedBy: 'Alex Thompson', updatedAt: '2026-02-20T14:00:00Z', createdAt: '2025-11-01T08:00:00Z' },
+  { id: 'vc3', vendorId: 'vnd2', eventId: 'evt2', loginId: 'viagogo.f1sgp', email: 'j.meester@viagogo.com', passwordHash: 'F1Sgp#2026!', active: true, notes: 'F1 Singapore GP credentials', updatedBy: 'Sara Chen', updatedAt: '2026-04-01T11:00:00Z', createdAt: '2026-03-01T10:00:00Z' },
+  { id: 'vc4', vendorId: 'vnd3', eventId: 'evt1', loginId: 'stubhub.fifa', email: 'accounts@stubhub.com', passwordHash: 'StUb#Fifa26', active: false, notes: 'Deactivated — contract ended', updatedBy: 'Sara Chen', updatedAt: '2026-03-30T16:00:00Z', createdAt: '2025-12-15T09:00:00Z' },
+];
+
+const INITIAL_CREDENTIAL_HISTORY: CredentialHistoryEntry[] = [
+  { id: 'ch1', credentialId: 'vc1', action: 'CREATED', actor: 'Alex Thompson', timestamp: '2026-01-10T09:00:00Z', details: 'Credential created for FIFA WC 2026' },
+  { id: 'ch2', credentialId: 'vc1', action: 'UPDATED', actor: 'Alex Thompson', timestamp: '2026-03-15T10:30:00Z', details: 'Password updated' },
+  { id: 'ch3', credentialId: 'vc2', action: 'CREATED', actor: 'Alex Thompson', timestamp: '2025-11-01T08:00:00Z', details: 'Global credential created' },
+  { id: 'ch4', credentialId: 'vc3', action: 'CREATED', actor: 'Sara Chen', timestamp: '2026-03-01T10:00:00Z', details: 'F1 Singapore credential created' },
+  { id: 'ch5', credentialId: 'vc4', action: 'CREATED', actor: 'Sara Chen', timestamp: '2025-12-15T09:00:00Z', details: 'StubHub FIFA credential created' },
+  { id: 'ch6', credentialId: 'vc4', action: 'DEACTIVATED', actor: 'Sara Chen', timestamp: '2026-03-30T16:00:00Z', details: 'Contract ended — credential deactivated' },
+];
+
 const INITIAL_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
   { id: 'nt1', triggerEvent: 'OVERSELL_DETECTED', label: 'Oversell Alert', subjectTemplate: '[TicketOps] Oversell detected — {{sale_id}}', bodyTemplate: 'A sale ({{sale_id}}) for {{client_name}} has exceeded available inventory for {{category}} on {{match_name}}. Please review and approve or reject.', channels: ['EMAIL', 'IN_APP'], recipientRoles: ['ops_manager', 'event_admin'], isActive: true },
   { id: 'nt2', triggerEvent: 'PORTAL_GENERATED', label: 'Client Portal Generated', subjectTemplate: 'Your ticket portal is ready — {{event_name}}', bodyTemplate: 'Dear {{client_name}}, your secure ticket portal for {{match_name}} is ready. Please visit {{portal_url}} to submit guest details before {{deadline}}.', channels: ['EMAIL'], recipientRoles: ['client'], isActive: true },
