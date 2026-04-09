@@ -78,11 +78,45 @@ export interface CredentialHistoryEntry {
   actor: string; timestamp: string; details: string;
 }
 
+export type NotificationChannel = 'email' | 'whatsapp' | 'slack' | 'in_app';
+
 export interface NotificationTemplate {
-  id: string; triggerEvent: string; label: string;
-  subjectTemplate: string; bodyTemplate: string;
-  channels: ('EMAIL' | 'IN_APP')[]; recipientRoles: string[];
-  isActive: boolean;
+  id: string; code: string; name: string;
+  channels: NotificationChannel[];
+  subject: string; bodyMarkdown: string;
+  variables: Record<string, string>; // variable name → description
+  active: boolean;
+  // Legacy compat
+  triggerEvent?: string; label?: string;
+  subjectTemplate?: string; bodyTemplate?: string;
+  recipientRoles?: string[]; isActive?: boolean;
+}
+
+export type NotificationEventType =
+  | 'oversell.raised' | 'oversell.resolved'
+  | 'sale.created' | 'sale.unallocated_72h'
+  | 'allocation.committed' | 'allocation.upgrade_approved'
+  | 'portal.generated' | 'portal.fully_submitted'
+  | 'dispatch.ticket_unsent_T_minus_65d' | 'dispatch.issue_raised' | 'sale.fully_dispatched'
+  | 'credential.updated'
+  | 'event.transition';
+
+export interface NotificationTrigger {
+  id: string; templateId: string;
+  eventType: NotificationEventType;
+  conditions: Record<string, any>; // e.g. { "sale.totalValue": { ">": 100000 } }
+  recipients: string; // expression e.g. "sale.assigned_operator", "role:ops_manager"
+  active: boolean;
+}
+
+export type NotificationLogStatus = 'queued' | 'sent' | 'failed';
+
+export interface NotificationLogEntry {
+  id: string; templateId: string; triggerId: string;
+  eventType: string; payload: Record<string, any>;
+  recipients: string[]; channel: NotificationChannel;
+  sentAt: string; status: NotificationLogStatus;
+  error?: string; retryCount: number;
 }
 
 export interface SubGameCategory {
@@ -196,14 +230,41 @@ const INITIAL_CREDENTIAL_HISTORY: CredentialHistoryEntry[] = [
 ];
 
 const INITIAL_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
-  { id: 'nt1', triggerEvent: 'OVERSELL_DETECTED', label: 'Oversell Alert', subjectTemplate: '[TicketOps] Oversell detected — {{sale_id}}', bodyTemplate: 'A sale ({{sale_id}}) for {{client_name}} has exceeded available inventory for {{category}} on {{match_name}}. Please review and approve or reject.', channels: ['EMAIL', 'IN_APP'], recipientRoles: ['ops_manager', 'event_admin'], isActive: true },
-  { id: 'nt2', triggerEvent: 'PORTAL_GENERATED', label: 'Client Portal Generated', subjectTemplate: 'Your ticket portal is ready — {{event_name}}', bodyTemplate: 'Dear {{client_name}}, your secure ticket portal for {{match_name}} is ready. Please visit {{portal_url}} to submit guest details before {{deadline}}.', channels: ['EMAIL'], recipientRoles: ['client'], isActive: true },
-  { id: 'nt3', triggerEvent: 'PORTAL_REMINDER', label: 'Portal Reminder', subjectTemplate: 'Reminder: Guest details needed — {{match_name}}', bodyTemplate: 'Dear {{client_name}}, we have not yet received all guest details for your tickets to {{match_name}}. Deadline: {{deadline}}. Portal: {{portal_url}}.', channels: ['EMAIL'], recipientRoles: ['client'], isActive: true },
-  { id: 'nt4', triggerEvent: 'TICKET_DISPATCHED', label: 'Ticket Dispatched', subjectTemplate: 'Your ticket has been sent — {{inv_no}}', bodyTemplate: 'Dear {{guest_name}}, your ticket ({{inv_no}}) for {{match_name}} — {{category}} has been dispatched to {{email}}.', channels: ['EMAIL', 'IN_APP'], recipientRoles: ['client'], isActive: true },
-  { id: 'nt5', triggerEvent: 'DISPATCH_OVERDUE', label: 'Dispatch Overdue Alert', subjectTemplate: '[URGENT] Dispatch overdue — {{match_name}}', bodyTemplate: '{{count}} tickets for {{match_name}} have not been dispatched. Event is in {{days}} days. Immediate action required.', channels: ['EMAIL', 'IN_APP'], recipientRoles: ['ops_manager', 'sr_operator'], isActive: true },
-  { id: 'nt6', triggerEvent: 'ALLOCATION_COMPLETE', label: 'Allocation Complete', subjectTemplate: 'Allocation confirmed — {{sale_id}}', bodyTemplate: '{{count}} tickets for {{client_name}} ({{sale_id}}) have been allocated successfully. AllocNote: {{alloc_note}}.', channels: ['IN_APP'], recipientRoles: ['sr_operator', 'ops_manager'], isActive: true },
-  { id: 'nt7', triggerEvent: 'SALE_CANCELLED', label: 'Sale Cancellation', subjectTemplate: 'Sale {{sale_id}} has been cancelled', bodyTemplate: 'Sale {{sale_id}} for {{client_name}} has been cancelled by {{cancelled_by}}. Reason: {{reason}}.', channels: ['EMAIL', 'IN_APP'], recipientRoles: ['ops_manager', 'sr_operator'], isActive: true },
-  { id: 'nt8', triggerEvent: 'PRICE_CHANGE_APPROVAL', label: 'Price Change Approval', subjectTemplate: 'Price change requires your approval — {{sale_id}}', bodyTemplate: '{{requested_by}} has requested a price change on {{sale_id}} ({{category}}) from {{old_price}} to {{new_price}} (+{{pct}}%). Please review.', channels: ['EMAIL', 'IN_APP'], recipientRoles: ['ops_manager'], isActive: true },
+  { id: 'nt1', code: 'oversell_alert', name: 'Oversell Alert', channels: ['email', 'in_app'], subject: '[TicketOps] Oversell detected — {{sale.code}}', bodyMarkdown: 'A sale (**{{sale.code}}**) for **{{client.name}}** has exceeded available inventory for {{category}} on {{match.name}}.\n\nPlease review and approve or reject.', variables: { 'sale.code': 'Sale reference', 'client.name': 'Client company', 'category': 'Ticket category', 'match.name': 'Match description' }, active: true },
+  { id: 'nt2', code: 'portal_generated', name: 'Client Portal Generated', channels: ['email'], subject: 'Your ticket portal is ready — {{event.name}}', bodyMarkdown: 'Dear {{client.name}},\n\nYour secure ticket portal for **{{match.name}}** is ready.\n\nPlease visit [your portal]({{portal.url}}) to submit guest details before **{{portal.deadline}}**.', variables: { 'client.name': 'Client name', 'match.name': 'Match', 'portal.url': 'Portal link', 'portal.deadline': 'Submission deadline', 'event.name': 'Event name' }, active: true },
+  { id: 'nt3', code: 'portal_reminder', name: 'Portal Reminder', channels: ['email', 'whatsapp'], subject: 'Reminder: Guest details needed — {{match.name}}', bodyMarkdown: 'Dear {{client.name}},\n\nWe have not yet received all guest details for your tickets to **{{match.name}}**.\n\nDeadline: **{{portal.deadline}}**\n\nPortal: {{portal.url}}', variables: { 'client.name': 'Client', 'match.name': 'Match', 'portal.deadline': 'Deadline', 'portal.url': 'Link' }, active: true },
+  { id: 'nt4', code: 'ticket_dispatched', name: 'Ticket Dispatched', channels: ['email', 'in_app'], subject: 'Your ticket has been sent — {{dispatch.invNo}}', bodyMarkdown: 'Dear {{guest.name}},\n\nYour ticket (**{{dispatch.invNo}}**) for {{match.name}} — {{category}} has been dispatched to {{guest.email}}.', variables: { 'guest.name': 'Guest', 'dispatch.invNo': 'Invoice #', 'match.name': 'Match', 'category': 'Category', 'guest.email': 'Email' }, active: true },
+  { id: 'nt5', code: 'dispatch_overdue', name: 'Dispatch Overdue Alert', channels: ['email', 'in_app'], subject: '[URGENT] Dispatch overdue — {{match.name}}', bodyMarkdown: '**{{count}}** tickets for **{{match.name}}** have not been dispatched.\n\nEvent is in **{{days}}** days. Immediate action required.', variables: { 'count': 'Ticket count', 'match.name': 'Match', 'days': 'Days to event' }, active: true },
+  { id: 'nt6', code: 'allocation_committed', name: 'Allocation Committed', channels: ['in_app'], subject: 'Allocation confirmed — {{sale.code}}', bodyMarkdown: '{{count}} tickets for **{{client.name}}** ({{sale.code}}) have been allocated successfully.\n\nNote: {{allocation.note}}', variables: { 'count': 'Count', 'client.name': 'Client', 'sale.code': 'Sale ref', 'allocation.note': 'Note' }, active: true },
+  { id: 'nt7', code: 'sale_created', name: 'Sale Created', channels: ['email', 'in_app'], subject: 'New sale {{sale.code}} created', bodyMarkdown: 'Sale **{{sale.code}}** for **{{client.name}}** has been created by {{actor.name}}.\n\nTotal: {{sale.totalValue}}', variables: { 'sale.code': 'Sale ref', 'client.name': 'Client', 'actor.name': 'Creator', 'sale.totalValue': 'Value' }, active: true },
+  { id: 'nt8', code: 'credential_updated', name: 'Credential Updated', channels: ['in_app', 'slack'], subject: 'Vendor credential updated — {{vendor.name}}', bodyMarkdown: '{{actor.name}} updated credentials for **{{vendor.name}}** ({{credential.loginId}}).', variables: { 'vendor.name': 'Vendor', 'actor.name': 'Who', 'credential.loginId': 'Login' }, active: true },
+  { id: 'nt9', code: 'event_transition', name: 'Event State Change', channels: ['email', 'in_app', 'slack'], subject: 'Event {{event.name}} → {{event.newStatus}}', bodyMarkdown: '**{{event.name}}** has been transitioned from {{event.oldStatus}} to **{{event.newStatus}}** by {{actor.name}}.', variables: { 'event.name': 'Event', 'event.oldStatus': 'From', 'event.newStatus': 'To', 'actor.name': 'Who' }, active: true },
+  { id: 'nt10', code: 'dispatch_issue', name: 'Dispatch Issue Raised', channels: ['email', 'in_app'], subject: 'Dispatch issue — {{match.name}}', bodyMarkdown: 'A dispatch issue has been raised for **{{match.name}}**, ticket {{dispatch.invNo}}.\n\nReason: {{issue.reason}}', variables: { 'match.name': 'Match', 'dispatch.invNo': 'Invoice', 'issue.reason': 'Reason' }, active: true },
+];
+
+const INITIAL_NOTIFICATION_TRIGGERS: NotificationTrigger[] = [
+  { id: 'trg1', templateId: 'nt1', eventType: 'oversell.raised', conditions: {}, recipients: 'role:ops_manager', active: true },
+  { id: 'trg2', templateId: 'nt2', eventType: 'portal.generated', conditions: {}, recipients: 'client.primary_contact', active: true },
+  { id: 'trg3', templateId: 'nt3', eventType: 'portal.generated', conditions: { 'portal.hoursRemaining': { '<=': 72 } }, recipients: 'client.primary_contact', active: true },
+  { id: 'trg4', templateId: 'nt4', eventType: 'sale.fully_dispatched', conditions: {}, recipients: 'client.primary_contact', active: true },
+  { id: 'trg5', templateId: 'nt5', eventType: 'dispatch.ticket_unsent_T_minus_65d', conditions: {}, recipients: 'role:ops_manager', active: true },
+  { id: 'trg6', templateId: 'nt6', eventType: 'allocation.committed', conditions: {}, recipients: 'sale.assigned_operator', active: true },
+  { id: 'trg7', templateId: 'nt7', eventType: 'sale.created', conditions: {}, recipients: 'role:ops_manager', active: true },
+  { id: 'trg8', templateId: 'nt8', eventType: 'credential.updated', conditions: {}, recipients: 'role:ops_manager', active: true },
+  { id: 'trg9', templateId: 'nt9', eventType: 'event.transition', conditions: {}, recipients: 'role:ops_manager', active: true },
+  { id: 'trg10', templateId: 'nt1', eventType: 'oversell.resolved', conditions: {}, recipients: 'sale.assigned_operator', active: true },
+  { id: 'trg11', templateId: 'nt10', eventType: 'dispatch.issue_raised', conditions: {}, recipients: 'role:sr_operator', active: true },
+];
+
+const INITIAL_NOTIFICATION_LOG: NotificationLogEntry[] = [
+  { id: 'nl1', templateId: 'nt1', triggerId: 'trg1', eventType: 'oversell.raised', payload: { 'sale.code': 'S-2026-003', 'client.name': 'Roadtrips', 'category': 'Top Cat 1', 'match.name': 'MEX v RSA' }, recipients: ['Sara Al Mansoori'], channel: 'email', sentAt: '2026-04-08T14:22:00Z', status: 'sent', retryCount: 0 },
+  { id: 'nl2', templateId: 'nt1', triggerId: 'trg1', eventType: 'oversell.raised', payload: { 'sale.code': 'S-2026-003', 'client.name': 'Roadtrips', 'category': 'Top Cat 1', 'match.name': 'MEX v RSA' }, recipients: ['Sara Al Mansoori'], channel: 'in_app', sentAt: '2026-04-08T14:22:01Z', status: 'sent', retryCount: 0 },
+  { id: 'nl3', templateId: 'nt7', triggerId: 'trg7', eventType: 'sale.created', payload: { 'sale.code': 'S-2026-004', 'client.name': 'Blend Group', 'actor.name': 'James Patel', 'sale.totalValue': 'AED 180,000' }, recipients: ['Sara Al Mansoori'], channel: 'email', sentAt: '2026-04-07T10:15:00Z', status: 'sent', retryCount: 0 },
+  { id: 'nl4', templateId: 'nt2', triggerId: 'trg2', eventType: 'portal.generated', payload: { 'client.name': 'Roadtrips', 'match.name': 'MEX v RSA', 'portal.url': 'https://portal.ticketops.ae/abc123', 'portal.deadline': '15 Jun 2026', 'event.name': 'FIFA WC 2026' }, recipients: ['David Clarke'], channel: 'email', sentAt: '2026-04-06T09:00:00Z', status: 'sent', retryCount: 0 },
+  { id: 'nl5', templateId: 'nt5', triggerId: 'trg5', eventType: 'dispatch.ticket_unsent_T_minus_65d', payload: { 'count': '12', 'match.name': 'USA v CAN', 'days': '65' }, recipients: ['Sara Al Mansoori'], channel: 'email', sentAt: '2026-04-05T08:00:00Z', status: 'failed', error: 'SMTP timeout after 30s', retryCount: 3 },
+  { id: 'nl6', templateId: 'nt9', triggerId: 'trg9', eventType: 'event.transition', payload: { 'event.name': 'FIFA WC 2026', 'event.oldStatus': 'BUYING', 'event.newStatus': 'SELLING', 'actor.name': 'Sara Al Mansoori' }, recipients: ['Sara Al Mansoori', 'Alex Rahman'], channel: 'slack', sentAt: '2026-04-01T11:30:00Z', status: 'sent', retryCount: 0 },
+  { id: 'nl7', templateId: 'nt6', triggerId: 'trg6', eventType: 'allocation.committed', payload: { 'count': '8', 'client.name': 'Roadtrips', 'sale.code': 'S-2026-001', 'allocation.note': 'Consecutive block A12-A19' }, recipients: ['James Patel'], channel: 'in_app', sentAt: '2026-04-03T16:45:00Z', status: 'sent', retryCount: 0 },
+  { id: 'nl8', templateId: 'nt8', triggerId: 'trg8', eventType: 'credential.updated', payload: { 'vendor.name': 'poxami', 'actor.name': 'Alex Rahman', 'credential.loginId': 'clara.wc2026' }, recipients: ['Sara Al Mansoori'], channel: 'in_app', sentAt: '2026-04-02T13:20:00Z', status: 'sent', retryCount: 0 },
 ];
 
 function cat(id: string, displayName: string, level: number, hint = ''): SubGameCategory {
@@ -304,6 +365,8 @@ interface AppContextType {
   clients: Client[];
   contracts: Contract[];
   notificationTemplates: NotificationTemplate[];
+  notificationTriggers: NotificationTrigger[];
+  notificationLog: NotificationLogEntry[];
   events: EventDef[];
   vendorCredentials: VendorCredential[];
   credentialHistory: CredentialHistoryEntry[];
@@ -353,6 +416,13 @@ interface AppContextType {
   addCategoryToSubGame(subGameId: string, category: Omit<SubGameCategory, 'id'>): void;
   updateCategory(subGameId: string, categoryId: string, data: Partial<SubGameCategory>): void;
   updateNotificationTemplate(id: string, data: Partial<NotificationTemplate>): void;
+  addNotificationTemplate(t: Omit<NotificationTemplate, 'id'>): void;
+  addNotificationTrigger(t: Omit<NotificationTrigger, 'id'>): void;
+  updateNotificationTrigger(id: string, data: Partial<NotificationTrigger>): void;
+  deleteNotificationTrigger(id: string): void;
+  addNotificationLogEntry(entry: Omit<NotificationLogEntry, 'id'>): void;
+  getTriggersForTemplate(templateId: string): NotificationTrigger[];
+  getLogForTemplate(templateId: string): NotificationLogEntry[];
   setVendorEventBridge(bridge: VendorEventBridge): void;
   addVendorCredential(cred: Omit<VendorCredential, 'id'>): void;
   updateVendorCredential(id: string, data: Partial<VendorCredential>): void;
@@ -379,6 +449,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
   const [contracts, setContracts] = useState<Contract[]>(INITIAL_CONTRACTS);
   const [notificationTemplates, setNotificationTemplates] = useState<NotificationTemplate[]>(INITIAL_NOTIFICATION_TEMPLATES);
+  const [notificationTriggers, setNotificationTriggers] = useState<NotificationTrigger[]>(INITIAL_NOTIFICATION_TRIGGERS);
+  const [notificationLog, setNotificationLog] = useState<NotificationLogEntry[]>(INITIAL_NOTIFICATION_LOG);
   const [events, setEvents] = useState<EventDef[]>(INITIAL_EVENTS);
   const [vendorCredentials, setVendorCredentials] = useState<VendorCredential[]>(INITIAL_VENDOR_CREDENTIALS);
   const [credentialHistory, setCredentialHistory] = useState<CredentialHistoryEntry[]>(INITIAL_CREDENTIAL_HISTORY);
@@ -494,6 +566,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateNotificationTemplate = useCallback((id: string, data: Partial<NotificationTemplate>) =>
     setNotificationTemplates(prev => prev.map(t => t.id === id ? { ...t, ...data } : t)), []);
+  const addNotificationTemplate = useCallback((t: Omit<NotificationTemplate, 'id'>) =>
+    setNotificationTemplates(prev => [...prev, { ...t, id: uid() }]), []);
+  const addNotificationTrigger = useCallback((t: Omit<NotificationTrigger, 'id'>) =>
+    setNotificationTriggers(prev => [...prev, { ...t, id: uid() }]), []);
+  const updateNotificationTrigger = useCallback((id: string, data: Partial<NotificationTrigger>) =>
+    setNotificationTriggers(prev => prev.map(t => t.id === id ? { ...t, ...data } : t)), []);
+  const deleteNotificationTrigger = useCallback((id: string) =>
+    setNotificationTriggers(prev => prev.filter(t => t.id !== id)), []);
+  const addNotificationLogEntry = useCallback((entry: Omit<NotificationLogEntry, 'id'>) =>
+    setNotificationLog(prev => [...prev, { ...entry, id: uid() }]), []);
+  const getTriggersForTemplate = useCallback((templateId: string) =>
+    notificationTriggers.filter(t => t.templateId === templateId), [notificationTriggers]);
+  const getLogForTemplate = useCallback((templateId: string) =>
+    notificationLog.filter(l => l.templateId === templateId).sort((a, b) => b.sentAt.localeCompare(a.sentAt)), [notificationLog]);
+
   const setVendorEventBridge = useCallback((bridge: VendorEventBridge) =>
     setVendorEventBridges(prev => {
       const idx = prev.findIndex(b => b.id === bridge.id);
@@ -523,7 +610,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const value = useMemo<AppContextType>(() => ({
     organisation, settings, currencies, venues, vendors, vendorEventBridges,
-    clients, contracts, notificationTemplates, events, matches, subGames,
+    clients, contracts, notificationTemplates, notificationTriggers, notificationLog,
+    events, matches, subGames,
     vendorCredentials, credentialHistory,
     getEvent, getMatch, getSubGame, getSubGamesForMatch, hasMultipleSubGames,
     getCategoriesForSubGame, getHierarchyForSubGame, getMatchesForEvent,
@@ -535,12 +623,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addCurrency, updateCurrency,
     addEvent, updateEvent, addMatchToEvent, updateMatch,
     addSubGameToMatch, updateSubGame, addCategoryToSubGame, updateCategory,
-    updateNotificationTemplate, setVendorEventBridge,
+    updateNotificationTemplate, addNotificationTemplate,
+    addNotificationTrigger, updateNotificationTrigger, deleteNotificationTrigger,
+    addNotificationLogEntry, getTriggersForTemplate, getLogForTemplate,
+    setVendorEventBridge,
     addVendorCredential, updateVendorCredential, addCredentialHistoryEntry,
     getCredentialsForVendor, getCredentialHistory, getBestCredential,
   }), [
     organisation, settings, currencies, venues, vendors, vendorEventBridges,
-    clients, contracts, notificationTemplates, events, matches, subGames,
+    clients, contracts, notificationTemplates, notificationTriggers, notificationLog,
+    events, matches, subGames,
     vendorCredentials, credentialHistory,
     getEvent, getMatch, getSubGame, getSubGamesForMatch, hasMultipleSubGames,
     getCategoriesForSubGame, getHierarchyForSubGame, getMatchesForEvent,
@@ -552,7 +644,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addCurrency, updateCurrency,
     addEvent, updateEvent, addMatchToEvent, updateMatch,
     addSubGameToMatch, updateSubGame, addCategoryToSubGame, updateCategory,
-    updateNotificationTemplate, setVendorEventBridge,
+    updateNotificationTemplate, addNotificationTemplate,
+    addNotificationTrigger, updateNotificationTrigger, deleteNotificationTrigger,
+    addNotificationLogEntry, getTriggersForTemplate, getLogForTemplate,
+    setVendorEventBridge,
     addVendorCredential, updateVendorCredential, addCredentialHistoryEntry,
     getCredentialsForVendor, getCredentialHistory, getBestCredential,
   ]);

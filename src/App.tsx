@@ -47,6 +47,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import VendorCredentialsPage from "@/pages/VendorCredentialsPage";
 import AuditLogPage from "@/pages/AuditLogPage";
 import ReconciliationPage from "@/pages/ReconciliationPage";
+import NotificationTemplatesPage from "@/pages/NotificationTemplatesPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 const queryClient = new QueryClient();
@@ -162,7 +163,7 @@ const App = () => (
                   <RoleProtectedRoute allowedRoles={ADMIN_ROLES}><UsersPage /></RoleProtectedRoute>
                 } />
                 <Route path="/admin/notifications" element={
-                  <RoleProtectedRoute allowedRoles={ADMIN_ROLES}><UsersPage /></RoleProtectedRoute>
+                  <RoleProtectedRoute allowedRoles={ADMIN_ROLES}><NotificationTemplatesPage /></RoleProtectedRoute>
                 } />
                 <Route path="/admin/vendor-credentials" element={
                   <RoleProtectedRoute allowedRoles={FULFILMENT_ROLES}><VendorCredentialsPage /></RoleProtectedRoute>

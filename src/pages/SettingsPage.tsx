@@ -271,83 +271,36 @@ function RBACSection() {
 /* ────────────────────────────────────────────────────────── */
 function NotificationsSection() {
   const ctx = useAppContext();
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [edits, setEdits] = useState<Record<string, { subject: string; body: string }>>({});
+  const navigate = useNavigate();
 
-  const toggle = (id: string) => setExpanded(expanded === id ? null : id);
-  const getEdit = (t: NotificationTemplate) => edits[t.id] ?? { subject: t.subjectTemplate, body: t.bodyTemplate };
-
-  const handleSave = (t: NotificationTemplate) => {
-    const e = getEdit(t);
-    ctx.updateNotificationTemplate(t.id, { subjectTemplate: e.subject, bodyTemplate: e.body });
-    toast.success(`Template "${t.label}" saved`);
-    setExpanded(null);
-  };
-
-  const CHANNEL_COLORS: Record<string, string> = { EMAIL: 'bg-blue-100 text-blue-700', IN_APP: 'bg-emerald-100 text-emerald-700' };
+  const CHANNEL_COLORS: Record<string, string> = { email: 'bg-blue-100 text-blue-700', in_app: 'bg-emerald-100 text-emerald-700', whatsapp: 'bg-green-100 text-green-700', slack: 'bg-purple-100 text-purple-700' };
 
   return (
     <div>
       <h2 className="font-display text-[22px] text-primary">Notifications</h2>
-      <p className="font-body text-sm text-muted-foreground mb-6">
-        Configure which notifications fire automatically and what they say. All templates support {'{{variables}}'} that are replaced at send time.
+      <p className="font-body text-sm text-muted-foreground mb-4">
+        Quick overview of notification templates. For full management, use the dedicated admin screen.
       </p>
+      <Button size="sm" variant="outline" className="mb-6" onClick={() => navigate('/admin/notifications')}>
+        <Bell size={14} className="mr-1.5" /> Open Notification Templates
+      </Button>
       <div className="border-b border-border mb-6" />
 
       <div className="space-y-3">
-        {ctx.notificationTemplates.map(t => {
-          const edit = getEdit(t);
-          const isOpen = expanded === t.id;
-          return (
-            <div key={t.id} className="border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-body text-[15px] font-bold text-foreground">{t.label}</span>
-                <Toggle value={t.isActive} onChange={v => ctx.updateNotificationTemplate(t.id, { isActive: v })} />
-              </div>
-              <p className="font-body text-xs text-muted-foreground mb-2">
-                Fires when: <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono text-[10px]">{t.triggerEvent}</span>
-              </p>
-              <div className="flex gap-1.5 mb-2">
-                {t.channels.map(ch => <span key={ch} className={`px-2 py-0.5 rounded-full font-body text-[10px] font-medium ${CHANNEL_COLORS[ch]}`}>{ch}</span>)}
-              </div>
-              <p className="font-body text-xs text-muted-foreground">
-                Sent to: {t.recipientRoles.map(r => <span key={r} className="px-1.5 py-0.5 rounded bg-muted font-body text-[10px] ml-1">{r}</span>)}
-              </p>
-
-              <button onClick={() => toggle(t.id)} className="font-body text-xs text-accent hover:underline mt-2 flex items-center gap-1">
-                {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />} Edit Template
-              </button>
-
-              <AnimatePresence>
-                {isOpen && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden mt-3 space-y-3">
-                    <div>
-                      <label className={labelCls}>Subject Template</label>
-                      <Input value={edit.subject} onChange={e => setEdits(p => ({ ...p, [t.id]: { ...edit, subject: e.target.value } }))} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Body Template</label>
-                      <textarea value={edit.body}
-                        onChange={e => setEdits(p => ({ ...p, [t.id]: { ...edit, body: e.target.value } }))}
-                        rows={4} className="w-full px-3 py-2 rounded-lg font-body text-sm border border-border outline-none focus:ring-1 focus:ring-accent bg-card resize-none font-mono" />
-                    </div>
-                    <p className={helperCls}>
-                      Variables: {'{{sale_id}}, {{client_name}}, {{match_name}}, {{category}}, {{portal_url}}, {{deadline}}, {{count}}, {{days}}, {{guest_name}}, {{inv_no}}, {{old_price}}, {{new_price}}, {{pct}}, {{cancelled_by}}, {{reason}}, {{alloc_note}}'}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleSave(t)}>Save Template</Button>
-                      <Button size="sm" variant="ghost" onClick={() => { setEdits(p => { const c = { ...p }; delete c[t.id]; return c; }); }}>Reset to Default</Button>
-                      <Button size="sm" variant="outline" onClick={() => toast.success('Test email sent (demo)')}>
-                        <Send size={12} className="mr-1" /> Send Test
-                      </Button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+        {ctx.notificationTemplates.map(t => (
+          <div key={t.id} className="border border-border rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-body text-[15px] font-bold text-foreground">{t.name}</span>
+              <Toggle value={t.active} onChange={v => ctx.updateNotificationTemplate(t.id, { active: v })} />
             </div>
-          );
-        })}
+            <div className="flex gap-1.5 mb-2">
+              {t.channels.map(ch => <span key={ch} className={`px-2 py-0.5 rounded-full font-body text-[10px] font-medium ${CHANNEL_COLORS[ch] ?? 'bg-muted text-muted-foreground'}`}>{ch}</span>)}
+            </div>
+            <p className="font-body text-xs text-muted-foreground">
+              {ctx.getTriggersForTemplate(t.id).length} trigger(s)
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
