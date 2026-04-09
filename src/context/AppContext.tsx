@@ -304,6 +304,8 @@ interface AppContextType {
   contracts: Contract[];
   notificationTemplates: NotificationTemplate[];
   events: EventDef[];
+  vendorCredentials: VendorCredential[];
+  credentialHistory: CredentialHistoryEntry[];
 
   // Derived flat arrays (backward-compat with old MOCK_MATCHES / MOCK_SUBGAMES)
   matches: MatchDef[];
