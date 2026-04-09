@@ -6,6 +6,7 @@ import {
 } from '@/data/mockData';
 import { ChevronRight, X, Check, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import UpgradeModal from '@/components/UpgradeModal';
 
 type Tab = 'all' | 'unallocated' | 'allocated' | 'fulfilled';
 
@@ -114,6 +115,7 @@ export default function DistributionPage() {
   const [manualSelected, setManualSelected] = useState<Set<string>>(new Set());
   const [allocatedLineIds, setAllocatedLineIds] = useState<Set<string>>(new Set());
   const [allocateAllSale, setAllocateAllSale] = useState<string | null>(null);
+  const [upgradeCtx, setUpgradeCtx] = useState<{ saleId: string; lineItem: SaleLineItem; lineIdx: number } | null>(null);
 
   const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   const toggleLine = (id: string) => setExpandedLines(prev => ({ ...prev, [id]: !prev[id] }));
@@ -294,7 +296,7 @@ export default function DistributionPage() {
                                     Allocate
                                   </button>
                                 ) : null}
-                                <button className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Upgrade</button>
+                                <button onClick={() => setUpgradeCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx })} className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Change Category</button>
                               </div>
                             </td>
                           </tr>
@@ -559,6 +561,10 @@ export default function DistributionPage() {
             </div>
           );
         })()}
+      </AnimatePresence>
+      <AnimatePresence>
+        {upgradeCtx && <UpgradeModal saleId={upgradeCtx.saleId} line={upgradeCtx.lineItem} lineIdx={upgradeCtx.lineIdx}
+          onClose={() => setUpgradeCtx(null)} onConfirm={() => setUpgradeCtx(null)} />}
       </AnimatePresence>
     </div>
   );

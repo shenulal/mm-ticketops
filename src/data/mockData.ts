@@ -120,6 +120,12 @@ export function getCategoriesForSubGame(subGameId: string): Category[] {
   return MOCK_SUBGAMES.find(sg => sg.id === subGameId)?.categories ?? [];
 }
 
+export function getHierarchyForSubGame(subGameId: string): Category[] {
+  const sg = MOCK_SUBGAMES.find(s => s.id === subGameId);
+  if (!sg) return [];
+  return [...sg.categories].sort((a, b) => a.level - b.level);
+}
+
 export function getInventoryKey(subGameId: string, categoryId: string): string {
   return `${subGameId}::${categoryId}`;
 }

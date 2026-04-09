@@ -8,6 +8,7 @@ import {
 } from '@/data/mockData';
 import { AlertTriangle, ChevronRight, X, Lock, Plus, Trash2, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import UpgradeModal from '@/components/UpgradeModal';
 
 const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
   FULFILLED:        { label: 'FULFILLED',       cls: 'bg-success text-primary-foreground' },
@@ -465,6 +466,7 @@ export default function SalesPage() {
   const [cancelSaleId, setCancelSaleId] = useState<string | null>(null);
   const [lineCancelCtx, setLineCancelCtx] = useState<{ saleId: string; line: SaleLineItem; lineIdx: number } | null>(null);
   const [editSaleId, setEditSaleId] = useState<string | null>(null);
+  const [upgradeCtx, setUpgradeCtx] = useState<{ saleId: string; line: SaleLineItem; lineIdx: number } | null>(null);
 
   const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -613,12 +615,12 @@ export default function SalesPage() {
                               {li.status === 'PENDING_APPROVAL' && isOversell ? (
                                 <>
                                   <button onClick={() => setModalCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
-                                  <button className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Upgrade</button>
+                                  <button onClick={() => setUpgradeCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Change Category</button>
                                 </>
                               ) : (
                                 <>
                                   <button className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-primary text-primary-foreground hover:opacity-90">Allocate</button>
-                                  {li.status === 'ALLOCATED' && <button className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Upgrade</button>}
+                                  <button onClick={() => setUpgradeCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Change Category</button>
                                 </>
                               )}
                               <button onClick={() => setLineCancelCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="font-body text-[11px] text-destructive hover:underline">Cancel Line</button>
@@ -639,7 +641,8 @@ export default function SalesPage() {
         {modalCtx && <ApprovalModal saleId={modalCtx.saleId} line={modalCtx.line} lineIdx={modalCtx.lineIdx}
           onApprove={() => { setApprovedLines(prev => new Set(prev).add(modalCtx.line.id)); setModalCtx(null); }}
           onReject={() => { setRejectedLines(prev => new Set(prev).add(modalCtx.line.id)); setModalCtx(null); }}
-          onUpgrade={() => setModalCtx(null)} onCancel={() => setModalCtx(null)} />}
+          onUpgrade={() => { setUpgradeCtx({ saleId: modalCtx.saleId, line: modalCtx.line, lineIdx: modalCtx.lineIdx }); setModalCtx(null); }}
+          onCancel={() => setModalCtx(null)} />}
       </AnimatePresence>
       <AnimatePresence>
         {cancelSaleId && <SaleCancelModal saleId={cancelSaleId} onClose={() => setCancelSaleId(null)}
@@ -652,6 +655,10 @@ export default function SalesPage() {
       </AnimatePresence>
       <AnimatePresence>
         {editSaleId && <SaleEditModal saleId={editSaleId} onClose={() => setEditSaleId(null)} onSave={() => {}} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {upgradeCtx && <UpgradeModal saleId={upgradeCtx.saleId} line={upgradeCtx.line} lineIdx={upgradeCtx.lineIdx}
+          onClose={() => setUpgradeCtx(null)} onConfirm={() => setUpgradeCtx(null)} />}
       </AnimatePresence>
     </div>
   );
