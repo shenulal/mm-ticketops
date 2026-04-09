@@ -5,15 +5,18 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import {
-  MOCK_MATCHES, MOCK_SUBGAMES, MOCK_SALE_LINE_ITEMS, MOCK_DIST_ROWS, MOCK_UNITS,
+  MOCK_MATCHES, MOCK_SUBGAMES, MOCK_SALE_LINE_ITEMS, MOCK_DIST_ROWS, MOCK_UNITS, MOCK_SALES,
   getInventorySummary, getRevenueSummary, getSellThroughByCat,
   getRevenueByClient, getDispatchUrgency, getPortalFunnel, getStaffPerformance,
+  type SaleLineItem,
 } from '@/data/mockData';
 import {
   GitBranch, AlertTriangle, Send, FileCheck, DollarSign, Clock, CheckCircle, FileText,
 } from 'lucide-react';
 import DashboardControlBar, { type DashboardFilters } from './DashboardControlBar';
 import { AED, shortAED, CHART_COLORS, ChartCard, CUSTOM_TOOLTIP_STYLE } from './chartHelpers';
+import OversellResolutionDrawer from '@/components/OversellResolutionDrawer';
+import { AnimatePresence } from 'framer-motion';
 
 function KPI({ label, value, sub, borderColor, icon: Icon, iconColor, pulse }: {
   label: string; value: string; sub: string; borderColor: string; icon: any; iconColor: string; pulse?: boolean;
