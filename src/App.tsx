@@ -35,7 +35,7 @@ const App = () => (
               <Route path="/events" element={<PlaceholderPage title="Events" />} />
               <Route path="/events/:id" element={<PlaceholderPage title="Event Detail" />} />
               <Route path="/purchases" element={<PurchasesPage />} />
-              <Route path="/purchases/new" element={<PlaceholderPage title="New Purchase" />} />
+              <Route path="/purchases/new" element={<NewPurchasePage />} />
               <Route path="/sales" element={<PlaceholderPage title="Sales" />} />
               <Route path="/sales/new" element={<PlaceholderPage title="New Sale" />} />
               <Route path="/distribution" element={<PlaceholderPage title="Distribution" />} />
