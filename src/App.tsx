@@ -21,6 +21,9 @@ import SalesPage from "@/pages/SalesPage";
 import NewSalePage from "@/pages/NewSalePage";
 import DistributionPage from "@/pages/DistributionPage";
 import AllocationPreviewPage from "@/pages/AllocationPreviewPage";
+import AutoAllocatePage from "@/pages/AutoAllocatePage";
+import AllocationPoliciesPage from "@/pages/AllocationPoliciesPage";
+import AllocationSettingsPage from "@/pages/AllocationSettingsPage";
 import StaffQueuePage from "@/pages/StaffQueuePage";
 import StaffTaskDetailPage from "@/pages/StaffTaskDetailPage";
 import SupplierPortalsPage from "@/pages/SupplierPortalsPage";
@@ -121,6 +124,11 @@ const App = () => (
                     <DistributionPage />
                   </RoleProtectedRoute>
                 } />
+                <Route path="/distribution/auto-allocate" element={
+                  <RoleProtectedRoute allowedRoles={FULFILMENT_ROLES}>
+                    <AutoAllocatePage />
+                  </RoleProtectedRoute>
+                } />
                 <Route path="/distribution/:saleId/preview" element={
                   <RoleProtectedRoute allowedRoles={FULFILMENT_ROLES}>
                     <AllocationPreviewPage />
@@ -170,6 +178,12 @@ const App = () => (
                 } />
                 <Route path="/admin/audit-log" element={
                   <RoleProtectedRoute allowedRoles={SETTINGS_ROLES}><AuditLogPage /></RoleProtectedRoute>
+                } />
+                <Route path="/admin/allocation-policies" element={
+                  <RoleProtectedRoute allowedRoles={[...FULFILMENT_ROLES]}><AllocationPoliciesPage /></RoleProtectedRoute>
+                } />
+                <Route path="/admin/allocation-settings" element={
+                  <RoleProtectedRoute allowedRoles={SETTINGS_ROLES}><AllocationSettingsPage /></RoleProtectedRoute>
                 } />
                 <Route path="/admin/reconciliation" element={
                   <RoleProtectedRoute allowedRoles={['super_admin', 'ops_manager']}><ReconciliationPage /></RoleProtectedRoute>
