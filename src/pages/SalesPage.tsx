@@ -8,6 +8,7 @@ import {
 } from '@/data/mockData';
 import { AlertTriangle, ChevronRight, X, Lock, Plus, Trash2, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import UpgradeModal from '@/components/UpgradeModal';
 
 const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
   FULFILLED:        { label: 'FULFILLED',       cls: 'bg-success text-primary-foreground' },
@@ -465,6 +466,7 @@ export default function SalesPage() {
   const [cancelSaleId, setCancelSaleId] = useState<string | null>(null);
   const [lineCancelCtx, setLineCancelCtx] = useState<{ saleId: string; line: SaleLineItem; lineIdx: number } | null>(null);
   const [editSaleId, setEditSaleId] = useState<string | null>(null);
+  const [upgradeCtx, setUpgradeCtx] = useState<{ saleId: string; line: SaleLineItem; lineIdx: number } | null>(null);
 
   const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
