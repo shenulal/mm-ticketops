@@ -57,7 +57,7 @@ export default function EventSwitcherModal({ onClose }: { onClose: () => void })
                     {e.status}
                   </span>
                 </div>
-                <p className="font-body text-xs mt-2" style={{ color: '#6B7280' }}>{e.matches} {e.matches > 10 ? 'matches' : 'sessions'}</p>
+                <p className="font-body text-xs mt-2" style={{ color: '#6B7280' }}>{e.matches.length} {e.matches.length > 10 ? 'matches' : 'sessions'}</p>
                 {isActive && <p className="font-body text-[11px] font-medium mt-1" style={{ color: '#C9A84C' }}>Currently active</p>}
               </button>
             );
