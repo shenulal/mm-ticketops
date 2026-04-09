@@ -12,15 +12,16 @@ import { toast } from 'sonner';
 import RoleGuard from '@/components/RoleGuard';
 
 const EVENT_TYPES: EventDef['eventType'][] = ['SPORTS_TOURNAMENT', 'RACING_SEASON', 'RACING_WEEKEND', 'CONCERT', 'CONFERENCE', 'EXPO', 'OTHER'];
-const STATUS_LIST: EventDef['status'][] = ['PLANNING', 'PROCUREMENT', 'SELLING', 'ALLOCATING', 'DISPATCHING', 'COMPLETED', 'ARCHIVED'];
+const STATUS_LIST: EventDef['status'][] = ['DRAFT', 'PLANNING', 'BUYING', 'SELLING', 'ALLOCATING', 'DISPATCHING', 'CLOSED', 'ARCHIVED'];
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  PLANNING: { bg: 'bg-muted', text: 'text-muted-foreground' },
-  PROCUREMENT: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  DRAFT: { bg: 'bg-muted', text: 'text-muted-foreground' },
+  PLANNING: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  BUYING: { bg: 'bg-indigo-100', text: 'text-indigo-700' },
   SELLING: { bg: 'bg-accent/20', text: 'text-accent' },
   ALLOCATING: { bg: 'bg-blue-100', text: 'text-blue-700' },
   DISPATCHING: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  COMPLETED: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  CLOSED: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
   ARCHIVED: { bg: 'bg-muted', text: 'text-muted-foreground' },
 };
 
@@ -90,7 +91,7 @@ export default function EventsPage() {
     }
     addEvent({
       code: form.code, name: form.name, eventType: form.eventType,
-      status: 'PLANNING', startDate: form.startDate, endDate: form.endDate,
+      status: 'DRAFT', startDate: form.startDate, endDate: form.endDate,
       defaultCurrency: form.defaultCurrency,
       dispatchBufferHours: form.dispatchBufferHours,
       portalTokenExpiryDays: form.portalTokenExpiryDays,
@@ -144,7 +145,7 @@ export default function EventsPage() {
       {/* Events grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.map(e => {
-          const sc = STATUS_COLORS[e.status] || STATUS_COLORS.PLANNING;
+          const sc = STATUS_COLORS[e.status] || STATUS_COLORS.DRAFT;
           const tc = TYPE_COLORS[e.eventType] || TYPE_COLORS.OTHER;
           const cur = currencies.find(c => c.code === e.defaultCurrency);
           return (
