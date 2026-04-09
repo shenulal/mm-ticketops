@@ -17,6 +17,7 @@ import DashboardControlBar, { type DashboardFilters } from './DashboardControlBa
 import { AED, shortAED, CHART_COLORS, ChartCard, CUSTOM_TOOLTIP_STYLE } from './chartHelpers';
 import OversellResolutionDrawer from '@/components/OversellResolutionDrawer';
 import { AnimatePresence } from 'framer-motion';
+import ActionCenter from './ActionCenter';
 
 function KPI({ label, value, sub, borderColor, icon: Icon, iconColor, pulse }: {
   label: string; value: string; sub: string; borderColor: string; icon: any; iconColor: string; pulse?: boolean;
@@ -89,6 +90,7 @@ export default function ManagerDashboard() {
   return (
     <div>
       <DashboardControlBar filters={filters} onChange={upd} showDateRange showViewMode />
+      <ActionCenter />
       <div className="p-6 space-y-6">
         {/* KPI Strip */}
         <div className="flex gap-4 overflow-x-auto pb-2">

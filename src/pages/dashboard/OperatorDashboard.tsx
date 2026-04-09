@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ShoppingCart, TrendingUp, Activity } from 'lucide-react';
 import { CHART_COLORS } from './chartHelpers';
+import ActionCenter from './ActionCenter';
 
 export default function OperatorDashboard() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export default function OperatorDashboard() {
 
   return (
     <div className="max-w-[700px] mx-auto py-8 px-4">
+      <ActionCenter />
       {/* Greeting */}
       <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: CHART_COLORS.navy }}>
         <p className="font-display text-[22px] text-primary-foreground">{greeting}, {name}</p>
