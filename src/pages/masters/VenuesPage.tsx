@@ -2,11 +2,24 @@ import { useState } from 'react';
 import { useAppContext, type Venue } from '@/context/AppContext';
 import MasterPage, { FieldRow, SectionHeading, StatusBadge, FormField, inputCls, selectCls, textareaCls, type ColumnDef } from '@/components/MasterPage';
 import { toast } from 'sonner';
+import { ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function VenuesPage() {
   const ctx = useAppContext();
 
-  const getMatchCount = (venueId: string) => ctx.matches.filter(m => m.venueId === venueId).length;
+  const getVenueUsage = (venueId: string) => {
+    const eventMap: Record<string, { eventName: string; matches: { code: string; teams: string; date: string }[] }> = {};
+    ctx.events.forEach(ev => {
+      ev.matches.filter(m => m.venueId === venueId).forEach(m => {
+        if (!eventMap[ev.id]) eventMap[ev.id] = { eventName: ev.name, matches: [] };
+        eventMap[ev.id].matches.push({ code: m.code, teams: m.teamsOrDescription, date: m.date });
+      });
+    });
+    const matchCount = Object.values(eventMap).reduce((s, g) => s + g.matches.length, 0);
+    const eventCount = Object.keys(eventMap).length;
+    return { eventMap, matchCount, eventCount };
+  };
 
   const columns: ColumnDef<Venue>[] = [
     { key: 'name', header: 'Venue Name', render: v => <span className="font-medium">{v.name}</span> },
@@ -14,15 +27,34 @@ export default function VenuesPage() {
     { key: 'country', header: 'Country', render: v => v.country },
     { key: 'capacity', header: 'Capacity', render: v => v.capacity > 0 ? v.capacity.toLocaleString() : '—' },
     { key: 'timezone', header: 'Timezone', render: v => <span className="text-[11px] font-mono">{v.timezone}</span> },
-    { key: 'matches', header: 'Matches Using', render: v => {
-      const count = getMatchCount(v.id);
-      return <span className="text-[12px]">{count} match{count !== 1 ? 'es' : ''}</span>;
+    { key: 'matches', header: 'Used In', render: v => {
+      const { eventMap, matchCount, eventCount } = getVenueUsage(v.id);
+      if (matchCount === 0) return <span className="text-[12px] text-muted-foreground">Not used</span>;
+      const tooltipLines = Object.values(eventMap).map(g =>
+        `${g.eventName}: ${g.matches.map(m => m.code).join(', ')}`
+      ).join('\n');
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-[12px] cursor-default underline decoration-dotted underline-offset-2">
+                {matchCount} match{matchCount !== 1 ? 'es' : ''} · {eventCount} event{eventCount !== 1 ? 's' : ''}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[280px] whitespace-pre-line text-[11px] font-body">
+              {tooltipLines}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
     }},
     { key: 'active', header: 'Status', render: v => <StatusBadge active={v.isActive} />, width: '100px' },
   ];
 
   const renderDrawer = (venue: Venue, onClose: () => void) => {
-    const venueMatches = ctx.matches.filter(m => m.venueId === venue.id);
+    const { eventMap, matchCount } = getVenueUsage(venue.id);
+    const activeMatchCount = ctx.events.flatMap(e => e.matches).filter(m => m.venueId === venue.id && m.isActive).length;
+
     return (
       <div>
         <SectionHeading title="Venue Details" />
@@ -36,24 +68,10 @@ export default function VenuesPage() {
         <FieldRow label="Status"><StatusBadge active={venue.isActive} /></FieldRow>
         {venue.notes && <><SectionHeading title="Notes" /><p className="text-[13px] font-body text-muted-foreground">{venue.notes}</p></>}
 
-        <SectionHeading title="Matches Using This Venue" count={venueMatches.length} />
-        {venueMatches.length === 0 ? (
-          <p className="text-[12px] text-muted-foreground font-body">No matches assigned to this venue.</p>
-        ) : venueMatches.map(m => {
-          const ev = ctx.events.find(e => e.matches.some(mm => mm.id === m.id));
-          return (
-            <div key={m.id} className="py-2 border-b border-border/50">
-              <div className="font-body text-[13px] font-medium text-foreground">{m.code} — {m.teams}</div>
-              <div className="text-[11px] text-muted-foreground font-body">{ev?.name} · {m.date}</div>
-            </div>
-          );
-        })}
+        <UsageAcrossEvents eventMap={eventMap} matchCount={matchCount} />
 
         <div className="mt-6 flex gap-3">
-          <button onClick={() => { ctx.updateVenue(venue.id, { isActive: !venue.isActive }); toast.success(`Venue ${venue.isActive ? 'deactivated' : 'activated'}`); onClose(); }}
-            className={`px-4 py-2 rounded-xl text-[13px] font-body font-medium ${venue.isActive ? 'bg-destructive/10 text-destructive hover:bg-destructive/20' : 'bg-success/10 text-success hover:bg-success/20'}`}>
-            {venue.isActive ? 'Deactivate' : 'Activate'}
-          </button>
+          <DeactivateButton venue={venue} activeMatchCount={activeMatchCount} onClose={onClose} />
         </div>
       </div>
     );
@@ -73,7 +91,95 @@ export default function VenuesPage() {
       renderDrawer={renderDrawer}
       renderCreateModal={renderCreate}
       writeRoles={['super_admin', 'event_admin', 'ops_manager']}
+      headerNote="Venues are global records. They are referenced by matches across all events. A venue does not belong to a specific event."
     />
+  );
+}
+
+/* ── Usage Across Events (collapsible) ── */
+function UsageAcrossEvents({ eventMap, matchCount }: { eventMap: Record<string, { eventName: string; matches: { code: string; teams: string; date: string }[] }>; matchCount: number }) {
+  const [open, setOpen] = useState(matchCount > 0);
+  return (
+    <div className="mt-4">
+      <button onClick={() => setOpen(o => !o)} className="flex items-center gap-2 w-full text-left">
+        {open ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />}
+        <span className="font-body text-[13px] font-semibold text-foreground">Usage Across Events</span>
+        <span className="text-[11px] text-muted-foreground">({matchCount})</span>
+      </button>
+      {open && (
+        <div className="mt-2 ml-5 space-y-3">
+          {matchCount === 0 ? (
+            <p className="text-[12px] text-muted-foreground font-body italic">Not yet used in any matches.</p>
+          ) : Object.values(eventMap).map((group, idx) => (
+            <div key={idx}>
+              <p className="font-body text-[13px] font-semibold text-foreground mb-1">{group.eventName}</p>
+              {group.matches.map((m, mi) => (
+                <div key={mi} className="text-[12px] font-body text-muted-foreground py-0.5 pl-3 border-l-2 border-border">
+                  {m.code} — {m.teams} | {m.date}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Deactivate Button with dependency check ── */
+function DeactivateButton({ venue, activeMatchCount, onClose }: { venue: Venue; activeMatchCount: number; onClose: () => void }) {
+  const ctx = useAppContext();
+  const [showWarning, setShowWarning] = useState(false);
+
+  const handleClick = () => {
+    if (venue.isActive && activeMatchCount > 0) {
+      setShowWarning(true);
+    } else {
+      ctx.updateVenue(venue.id, { isActive: !venue.isActive });
+      toast.success(`Venue ${venue.isActive ? 'deactivated' : 'activated'}`);
+      onClose();
+    }
+  };
+
+  const confirmDeactivate = () => {
+    ctx.updateVenue(venue.id, { isActive: false });
+    toast.success('Venue deactivated');
+    onClose();
+  };
+
+  if (showWarning) {
+    return (
+      <div className="w-full space-y-3">
+        <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
+          <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-body text-[13px] font-medium text-amber-800">
+              This venue is referenced by {activeMatchCount} active match{activeMatchCount !== 1 ? 'es' : ''}.
+            </p>
+            <p className="font-body text-[12px] text-amber-700 mt-1">
+              Deactivating will not delete those matches but you should update them to use a different venue first.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={confirmDeactivate}
+            className="px-4 py-2 rounded-xl text-[13px] font-body font-medium bg-destructive/10 text-destructive hover:bg-destructive/20">
+            Deactivate Anyway
+          </button>
+          <button onClick={() => setShowWarning(false)}
+            className="px-4 py-2 rounded-xl text-[13px] font-body font-medium text-muted-foreground hover:text-foreground">
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={handleClick}
+      className={`px-4 py-2 rounded-xl text-[13px] font-body font-medium ${venue.isActive ? 'bg-destructive/10 text-destructive hover:bg-destructive/20' : 'bg-success/10 text-success hover:bg-success/20'}`}>
+      {venue.isActive ? 'Deactivate' : 'Activate'}
+    </button>
   );
 }
 
