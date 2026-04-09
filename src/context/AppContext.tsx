@@ -107,7 +107,7 @@ export interface MatchDef {
 export interface EventDef {
   id: string; code: string; name: string;
   eventType: 'SPORTS_TOURNAMENT' | 'RACING_SEASON' | 'RACING_WEEKEND' | 'CONCERT' | 'CONFERENCE' | 'EXPO' | 'OTHER';
-  status: 'PLANNING' | 'PROCUREMENT' | 'SELLING' | 'ALLOCATING' | 'DISPATCHING' | 'COMPLETED' | 'ARCHIVED';
+  status: 'DRAFT' | 'PLANNING' | 'BUYING' | 'SELLING' | 'ALLOCATING' | 'DISPATCHING' | 'CLOSED' | 'ARCHIVED';
   startDate: string; endDate: string; defaultCurrency: string;
   dispatchBufferHours: number; portalTokenExpiryDays: number;
   allowOversell: boolean; ownerUserId: string;
