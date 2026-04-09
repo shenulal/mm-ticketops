@@ -10,6 +10,8 @@ import PlaceholderPage from "@/pages/PlaceholderPage";
 import DashboardPage from "@/pages/DashboardPage";
 import PurchasesPage from "@/pages/PurchasesPage";
 import NewPurchasePage from "@/pages/NewPurchasePage";
+import SalesPage from "@/pages/SalesPage";
+import NewSalePage from "@/pages/NewSalePage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,8 +38,8 @@ const App = () => (
               <Route path="/events/:id" element={<PlaceholderPage title="Event Detail" />} />
               <Route path="/purchases" element={<PurchasesPage />} />
               <Route path="/purchases/new" element={<NewPurchasePage />} />
-              <Route path="/sales" element={<PlaceholderPage title="Sales" />} />
-              <Route path="/sales/new" element={<PlaceholderPage title="New Sale" />} />
+              <Route path="/sales" element={<SalesPage />} />
+              <Route path="/sales/new" element={<NewSalePage />} />
               <Route path="/distribution" element={<PlaceholderPage title="Distribution" />} />
               <Route path="/distribution/allocate/:id" element={<PlaceholderPage title="Allocate Distribution" />} />
               <Route path="/staff-queue" element={<PlaceholderPage title="Staff Queue" />} />
