@@ -126,6 +126,9 @@ export default function MasterPage<T>({
   return (
     <div className="relative">
       {/* Header */}
+      {headerNote && (
+        <p className="font-body text-[13px] text-muted-foreground italic mb-4">{headerNote}</p>
+      )}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <h1 className="font-display text-[26px] text-primary">{title}</h1>
