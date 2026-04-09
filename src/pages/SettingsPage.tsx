@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext, type Organisation, type SystemSettings, type Currency, type NotificationTemplate } from '@/context/AppContext';
 import { MOCK_USERS, MOCK_PURCHASES, MOCK_SALES, MOCK_UNITS } from '@/data/mockData';
 import { Badge } from '@/components/ui/badge';
