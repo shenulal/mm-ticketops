@@ -135,7 +135,7 @@ export default function AllocationPreviewPage() {
   const [linePlans, setLinePlans] = useState<LinePlanState[]>(() => {
     if (!sale) return [];
     return sale.lines.map(li => {
-      const plans = generatePlans(li.subGameId, li.categoryId, li.qty);
+      const plans = generatePlans(li.subGameId, li.categoryId, li.qty, li.unitPrice);
       const bestPlan = plans[0];
       return {
         lineId: li.id,
@@ -176,7 +176,7 @@ export default function AllocationPreviewPage() {
 
     const soldLevel = getCatLevel(li.subGameId, li.categoryId);
     const newLevel = getCatLevel(li.subGameId, newCatId);
-    const plans = generatePlans(li.subGameId, newCatId, li.qty);
+    const plans = generatePlans(li.subGameId, newCatId, li.qty, li.unitPrice);
     const bestPlan = plans[0];
 
     setLinePlans(prev => prev.map((lp, i) => i !== lineIdx ? lp : {
