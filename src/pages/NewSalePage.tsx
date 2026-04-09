@@ -22,6 +22,8 @@ function makeId() { return `li-${Date.now()}-${Math.random().toString(36).slice(
 
 /* ── Inventory indicator per line ── */
 function InventoryIndicator({ subGameId, categoryId, qty }: { subGameId: string; categoryId: string; qty: number }) {
+  const ctx = useAppContext();
+
   if (!subGameId || !categoryId) {
     return (
       <div className="rounded-lg p-3 border border-border bg-muted">
@@ -31,7 +33,8 @@ function InventoryIndicator({ subGameId, categoryId, qty }: { subGameId: string;
   }
 
   const available = getInventoryAvailable(subGameId, categoryId);
-  const catLabel = MOCK_SUBGAMES.find(sg => sg.id === subGameId)?.categories.find(c => c.id === categoryId)?.label ?? categoryId;
+  const sg = ctx.getSubGame(subGameId);
+  const catLabel = sg?.categories.find(c => c.id === categoryId)?.displayName ?? categoryId;
   const remaining = available - qty;
   const isOversell = qty > 0 && qty > available;
   const isClose = qty > 0 && !isOversell && remaining <= 5;
@@ -60,10 +63,10 @@ function InventoryIndicator({ subGameId, categoryId, qty }: { subGameId: string;
 
   if (isClose) {
     return (
-      <div className="rounded-lg p-3 border border-warning bg-warning/10">
+      <div className="rounded-lg p-3 border border-amber-400 bg-amber-50">
         <div className="flex items-center gap-2">
-          <AlertTriangle size={14} className="text-warning shrink-0" />
-          <p className="font-body text-xs font-bold" style={{ color: '#92400E' }}>
+          <AlertTriangle size={14} className="text-amber-600 shrink-0" />
+          <p className="font-body text-xs font-bold text-amber-800">
             {available} units available · close to limit · {remaining} will remain
           </p>
         </div>
@@ -72,15 +75,15 @@ function InventoryIndicator({ subGameId, categoryId, qty }: { subGameId: string;
   }
 
   return (
-    <div className="rounded-lg p-3 border border-success bg-success/10">
+    <div className="rounded-lg p-3 border border-emerald-300 bg-emerald-50">
       <div className="flex items-center gap-2">
-        <CheckCircle size={14} className="text-success shrink-0" />
-        <p className="font-body text-xs font-bold" style={{ color: '#065F46' }}>
+        <CheckCircle size={14} className="text-emerald-600 shrink-0" />
+        <p className="font-body text-xs font-bold text-emerald-800">
           {available} {catLabel} units available · {remaining} will remain after this sale
         </p>
       </div>
-      <div className="w-full h-1.5 rounded-full bg-success/20 mt-2">
-        <div className="h-1.5 rounded-full bg-success" style={{ width: `${Math.min((qty / available) * 100, 100)}%` }} />
+      <div className="w-full h-1.5 rounded-full bg-emerald-200 mt-2">
+        <div className="h-1.5 rounded-full bg-emerald-500" style={{ width: `${Math.min((qty / available) * 100, 100)}%` }} />
       </div>
     </div>
   );
@@ -96,11 +99,12 @@ function LineItemCard({
   canRemove: boolean;
   errors: Record<string, boolean>;
 }) {
-  const isMultiSg = hasMultipleSubGames(matchId);
-  const subGames = getSubGamesForMatch(matchId);
+  const ctx = useAppContext();
+  const isMultiSg = ctx.hasMultipleSubGames(matchId);
+  const subGames = ctx.getSubGamesForMatch(matchId);
   const defaultSgId = !isMultiSg && subGames.length === 1 ? subGames[0].id : line.subGameId;
   const effectiveSgId = isMultiSg ? line.subGameId : defaultSgId;
-  const categories = effectiveSgId ? getCategoriesForSubGame(effectiveSgId) : [];
+  const categories = effectiveSgId ? ctx.getCategoriesForSubGame(effectiveSgId).filter(c => c.isActive) : [];
 
   // Auto-set subGameId for single sub-game matches
   if (!isMultiSg && subGames.length === 1 && line.subGameId !== subGames[0].id) {
@@ -132,11 +136,9 @@ function LineItemCard({
         {isMultiSg && (
           <div>
             <label className="block font-body text-xs font-medium text-foreground mb-1.5">Sub-Game *</label>
-            <select
-              value={line.subGameId}
+            <select value={line.subGameId}
               onChange={e => onUpdate(line.id, { subGameId: e.target.value, categoryId: '' })}
-              className={inputCls('subGameId')}
-            >
+              className={inputCls('subGameId')}>
               <option value="">Select session</option>
               {subGames.map(sg => <option key={sg.id} value={sg.id}>{sg.name}</option>)}
             </select>
@@ -145,14 +147,11 @@ function LineItemCard({
         )}
         <div>
           <label className="block font-body text-xs font-medium text-foreground mb-1.5">Category *</label>
-          <select
-            value={line.categoryId}
+          <select value={line.categoryId}
             onChange={e => onUpdate(line.id, { categoryId: e.target.value })}
-            className={inputCls('categoryId')}
-            disabled={!effectiveSgId}
-          >
+            className={inputCls('categoryId')} disabled={!effectiveSgId}>
             <option value="">Select category</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+            {categories.map(c => <option key={c.id} value={c.id}>{c.displayName}</option>)}
           </select>
           {errors[`${line.id}-categoryId`] && <p className="font-body text-xs mt-1 text-destructive">Required</p>}
         </div>
@@ -191,18 +190,31 @@ function LineItemCard({
 /* ── Main Page ── */
 export default function NewSalePage() {
   const navigate = useNavigate();
+  const ctx = useAppContext();
+  const { activeEvent } = useEvent();
+
+  // Dynamic data from AppContext
+  const eventMatches = useMemo(() =>
+    ctx.getEvent(activeEvent.id)?.matches.filter(m => m.isActive) ?? [],
+  [ctx, activeEvent.id]);
+
+  const eventClients = useMemo(() =>
+    ctx.clients.filter(c => c.isActive &&
+      ctx.contracts.some(ctr => ctr.partyId === c.id && ctr.eventId === activeEvent.id
+        && ctr.contractType === 'SALE' && ctr.status === 'ACTIVE')),
+  [ctx.clients, ctx.contracts, activeEvent.id]);
 
   // Header state
-  const [matchId, setMatchId] = useState('m01');
-  const [client, setClient] = useState('Roadtrips');
-  const [contract, setContract] = useState('2025-10885');
+  const [matchId, setMatchId] = useState(eventMatches[0]?.id ?? '');
+  const [clientId, setClientId] = useState('');
+  const [contract, setContract] = useState('');
   const [saleDate, setSaleDate] = useState<Date>(new Date());
   const [notes, setNotes] = useState('');
-  const [autoFilled, setAutoFilled] = useState(true);
+  const [autoFilled, setAutoFilled] = useState(false);
   const [headerErrors, setHeaderErrors] = useState<Record<string, boolean>>({});
 
-  // Default sub-game for m01
-  const defaultSg = getSubGamesForMatch('m01')[0]?.id ?? '';
+  // Default sub-game for first match
+  const defaultSg = ctx.getSubGamesForMatch(matchId)[0]?.id ?? '';
 
   // Line items — 3 pre-filled demo lines
   const [lines, setLines] = useState<LineItem[]>([
@@ -222,16 +234,16 @@ export default function NewSalePage() {
   const removeLine = (id: string) => setLines(prev => prev.filter(l => l.id !== id));
 
   const addLine = () => {
-    const sgs = getSubGamesForMatch(matchId);
+    const sgs = ctx.getSubGamesForMatch(matchId);
     const sgId = sgs.length === 1 ? sgs[0].id : '';
     setLines(prev => [...prev, { id: makeId(), subGameId: sgId, categoryId: '', qty: '', price: '' }]);
   };
 
   const handleClientChange = (val: string) => {
-    setClient(val);
+    setClientId(val);
     setHeaderErrors(e => ({ ...e, client: false }));
-    const c = CLIENTS.find(x => x.value === val);
-    if (c?.contract) { setContract(c.contract); setAutoFilled(true); } else { setAutoFilled(false); }
+    const ctr = ctx.getActiveContracts(val, activeEvent.id).find(c => c.contractType === 'SALE');
+    if (ctr) { setContract(ctr.contractRef); setAutoFilled(true); } else { setAutoFilled(false); }
   };
 
   // Summary computations
@@ -240,9 +252,10 @@ export default function NewSalePage() {
     const price = parseFloat(l.price) || 0;
     const available = l.subGameId && l.categoryId ? getInventoryAvailable(l.subGameId, l.categoryId) : 0;
     const isOversell = qty > 0 && qty > available;
-    const catLabel = MOCK_SUBGAMES.find(sg => sg.id === l.subGameId)?.categories.find(c => c.id === l.categoryId)?.label ?? '';
+    const sg = ctx.getSubGame(l.subGameId);
+    const catLabel = sg?.categories.find(c => c.id === l.categoryId)?.displayName ?? '';
     return { qty, total: qty * price, isOversell, catLabel };
-  }), [lines]);
+  }), [lines, ctx]);
 
   const totalQty = lineSummaries.reduce((s, l) => s + l.qty, 0);
   const totalValue = lineSummaries.reduce((s, l) => s + l.total, 0);
@@ -251,12 +264,12 @@ export default function NewSalePage() {
   const validate = () => {
     const hErrors: Record<string, boolean> = {};
     if (!matchId) hErrors.matchId = true;
-    if (!client) hErrors.client = true;
+    if (!clientId) hErrors.client = true;
     if (!contract) hErrors.contract = true;
     setHeaderErrors(hErrors);
 
     const lErrors: Record<string, boolean> = {};
-    const isMultiSg = hasMultipleSubGames(matchId);
+    const isMultiSg = ctx.hasMultipleSubGames(matchId);
     lines.forEach(l => {
       if (isMultiSg && !l.subGameId) lErrors[`${l.id}-subGameId`] = true;
       if (!l.categoryId) lErrors[`${l.id}-categoryId`] = true;
@@ -280,6 +293,8 @@ export default function NewSalePage() {
       headerErrors[field] ? 'border-2 border-destructive' : 'border-border focus:ring-1 focus:ring-accent'
     } bg-card`;
 
+  const selectedClient = ctx.getClient(clientId);
+
   return (
     <div className="max-w-[800px] mx-auto mt-8 pb-12">
       {/* Breadcrumb */}
@@ -297,7 +312,7 @@ export default function NewSalePage() {
         <div>
           <label className="block font-body text-xs font-medium text-foreground mb-1.5">Active Event</label>
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-body text-sm bg-accent/15 text-accent">
-            <Lock size={12} /> FIFA World Cup 2026
+            <Lock size={12} /> {activeEvent.name}
           </span>
         </div>
 
@@ -307,20 +322,20 @@ export default function NewSalePage() {
             <select value={matchId} onChange={e => {
               setMatchId(e.target.value);
               setHeaderErrors(h => ({ ...h, matchId: false }));
-              // Reset lines sub-games on match change
-              const sgs = getSubGamesForMatch(e.target.value);
+              const sgs = ctx.getSubGamesForMatch(e.target.value);
               const sgId = sgs.length === 1 ? sgs[0].id : '';
               setLines(prev => prev.map(l => ({ ...l, subGameId: sgId, categoryId: '' })));
             }} className={inputCls('matchId')}>
-              {MOCK_MATCHES.map(m => <option key={m.id} value={m.id}>{m.code} — {m.teams}</option>)}
+              <option value="">Select match</option>
+              {eventMatches.map(m => <option key={m.id} value={m.id}>{m.code} — {m.teamsOrDescription}</option>)}
             </select>
             {headerErrors.matchId && <p className="font-body text-xs mt-1 text-destructive">Required</p>}
           </div>
           <div>
             <label className="block font-body text-xs font-medium text-foreground mb-1.5">Client *</label>
-            <select value={client} onChange={e => handleClientChange(e.target.value)} className={inputCls('client')}>
+            <select value={clientId} onChange={e => handleClientChange(e.target.value)} className={inputCls('client')}>
               <option value="">Select client</option>
-              {CLIENTS.map(c => <option key={c.value} value={c.value}>{c.value}</option>)}
+              {eventClients.map(c => <option key={c.id} value={c.id}>{c.companyName}</option>)}
             </select>
             {headerErrors.client && <p className="font-body text-xs mt-1 text-destructive">Required</p>}
           </div>
@@ -330,7 +345,7 @@ export default function NewSalePage() {
           <div>
             <label className="block font-body text-xs font-medium text-foreground mb-1.5">
               Contract No. *
-              {autoFilled && <span className="ml-2 px-1.5 py-0.5 rounded font-body text-[11px] font-medium bg-success/10 text-success">Auto-filled</span>}
+              {autoFilled && <span className="ml-2 px-1.5 py-0.5 rounded font-body text-[11px] font-medium bg-emerald-100 text-emerald-800">Auto-filled</span>}
             </label>
             <input type="text" value={contract}
               onChange={e => { setContract(e.target.value); setAutoFilled(false); setHeaderErrors(h => ({ ...h, contract: false })); }}
@@ -377,22 +392,14 @@ export default function NewSalePage() {
         <div className="space-y-4">
           <AnimatePresence>
             {lines.map((line, i) => (
-              <motion.div
-                key={line.id}
+              <motion.div key={line.id}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                transition={{ duration: 0.2 }}
-              >
-                <LineItemCard
-                  line={line}
-                  index={i}
-                  matchId={matchId}
-                  onUpdate={updateLine}
-                  onRemove={removeLine}
-                  canRemove={lines.length > 1}
-                  errors={lineErrors}
-                />
+                transition={{ duration: 0.2 }}>
+                <LineItemCard line={line} index={i} matchId={matchId}
+                  onUpdate={updateLine} onRemove={removeLine}
+                  canRemove={lines.length > 1} errors={lineErrors} />
               </motion.div>
             ))}
           </AnimatePresence>
@@ -406,14 +413,14 @@ export default function NewSalePage() {
             {lines.length} lines · {totalQty} total tickets
           </span>
           <span className="font-body text-base font-bold text-primary-foreground">
-            Total Sale Value: AED {totalValue.toLocaleString()}
+            Total Sale Value: {ctx.formatCurrency(totalValue)}
           </span>
         </div>
         {oversellCount > 0 && (
-          <div className="mt-3 rounded-lg p-3 bg-warning/20 border border-warning/40">
+          <div className="mt-3 rounded-lg p-3 bg-amber-500/20 border border-amber-400/40">
             <div className="flex items-center gap-2">
-              <AlertTriangle size={14} className="text-warning shrink-0" />
-              <p className="font-body text-xs font-medium text-warning">
+              <AlertTriangle size={14} className="text-amber-300 shrink-0" />
+              <p className="font-body text-xs font-medium text-amber-200">
                 {oversellCount} line{oversellCount > 1 ? 's' : ''} require{oversellCount === 1 ? 's' : ''} manager approval — sale will be saved with partial pending status
               </p>
             </div>
@@ -433,13 +440,10 @@ export default function NewSalePage() {
           </div>
         </div>
       ) : (
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="rounded-xl p-5 bg-card border border-success shadow-sm"
-        >
+        <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+          className="rounded-xl p-5 bg-card border border-emerald-300 shadow-sm">
           <div className="flex items-start gap-3">
-            <CheckCircle size={20} className="text-success shrink-0 mt-0.5" />
+            <CheckCircle size={20} className="text-emerald-600 shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="font-body text-sm font-bold text-foreground">
                 SALE-003 created — {lines.length} lines · {totalQty} total tickets
@@ -450,8 +454,8 @@ export default function NewSalePage() {
                   return (
                     <p key={l.id} className="font-body text-xs text-muted-foreground">
                       Line {i + 1}: {s.catLabel || '—'} × {s.qty} — {s.isOversell
-                        ? <span className="text-warning font-medium">PENDING APPROVAL ⚠</span>
-                        : <span className="text-success font-medium">UNALLOCATED ✓</span>}
+                        ? <span className="text-amber-600 font-medium">PENDING APPROVAL ⚠</span>
+                        : <span className="text-emerald-600 font-medium">UNALLOCATED ✓</span>}
                     </p>
                   );
                 })}
