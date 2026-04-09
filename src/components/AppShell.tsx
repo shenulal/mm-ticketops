@@ -227,7 +227,7 @@ export default function AppShell() {
   // ── Render helpers ──
   const renderItem = (item: NavItem) => {
     const Icon = ICONS[item.icon];
-    const active = isItemActive(item.path, item.hasSubItems);
+    const active = isItemActive(item.path);
     const badge = item.badgeKey ? (navBadges as Record<string, number>)[item.badgeKey] : 0;
 
     return (
