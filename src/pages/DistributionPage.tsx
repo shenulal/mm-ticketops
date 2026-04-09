@@ -296,7 +296,7 @@ export default function DistributionPage() {
                                     Allocate
                                   </button>
                                 ) : null}
-                                <button className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Upgrade</button>
+                                <button onClick={() => setUpgradeCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx })} className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Change Category</button>
                               </div>
                             </td>
                           </tr>
