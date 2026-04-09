@@ -542,6 +542,9 @@ function AddMatchModal({ eventId, open, onClose }: { eventId: string; open: bool
               <SelectTrigger className="mt-1"><SelectValue placeholder="Select venue..." /></SelectTrigger>
               <SelectContent>{ctx.venues.filter(v => v.isActive).map(v => <SelectItem key={v.id} value={v.id}>{v.name}, {v.city}</SelectItem>)}</SelectContent>
             </Select>
+            <p className="font-body text-[11px] text-muted-foreground mt-1 italic">
+              Can't find the venue? <a href="/masters/venues" target="_blank" rel="noreferrer" className="underline text-primary hover:text-primary/80">Add it to the global Venues master first.</a>
+            </p>
           </div>
           {deadline && (
             <p className="font-body text-xs text-muted-foreground bg-muted p-2 rounded">
