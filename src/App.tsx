@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import AppShell from "@/components/AppShell";
 import LoginPage from "@/pages/LoginPage";
 import PlaceholderPage from "@/pages/PlaceholderPage";
+import DashboardPage from "@/pages/DashboardPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
