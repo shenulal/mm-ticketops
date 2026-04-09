@@ -19,6 +19,9 @@ interface UpgradeModalProps {
   onConfirm: (targetCategoryId: string, qty: number) => void;
 }
 
+function getMatchLabel(matchId: string) { const m = MOCK_MATCHES.find(x => x.id === matchId); return m ? `${m.code} ${m.teams}` : matchId; }
+function getSubGameName(sgId: string) { return MOCK_SUBGAMES.find(sg => sg.id === sgId)?.name ?? '—'; }
+
 export default function UpgradeModal({ saleId, line, lineIdx, onClose, onConfirm }: UpgradeModalProps) {
   const [step, setStep] = useState<Step>('assess');
   const [changeType, setChangeType] = useState<ChangeType>('full');

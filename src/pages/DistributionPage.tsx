@@ -24,6 +24,9 @@ const STATUS_CLS: Record<string, { label: string; cls: string }> = {
   PARTIAL_PENDING:  { label: 'PARTIAL PENDING', cls: 'bg-warning/15 text-warning' },
 };
 
+function getMatchLabel(matchId: string) { const m = MOCK_MATCHES.find(x => x.id === matchId); return m ? `${m.code} ${m.teams}` : matchId; }
+function getSubGameName(sgId: string) { return MOCK_SUBGAMES.find(sg => sg.id === sgId)?.name ?? '—'; }
+
 function deriveSaleStatus(lines: SaleLineItem[]): string {
   if (lines.every(l => l.status === 'FULFILLED')) return 'FULFILLED';
   if (lines.some(l => l.oversellFlag || l.status === 'PENDING_APPROVAL')) return 'PARTIAL_PENDING';

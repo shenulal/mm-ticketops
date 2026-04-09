@@ -23,6 +23,10 @@ const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
   CANCELLED:        { label: 'CANCELLED',        cls: 'bg-destructive/10 text-destructive' },
 };
 
+function getMatchLabel(matchId: string) { const m = MOCK_MATCHES.find(x => x.id === matchId); return m ? `${m.code} ${m.teams}` : matchId; }
+function getMatchCode(matchId: string) { return MOCK_MATCHES.find(x => x.id === matchId)?.code ?? matchId; }
+function getSubGameName(sgId: string) { return MOCK_SUBGAMES.find(sg => sg.id === sgId)?.name ?? '—'; }
+
 function deriveOverallStatus(lines: SaleLineItem[]): string {
   if (lines.length === 0) return 'CANCELLED';
   if (lines.every(l => l.status === 'FULFILLED')) return 'FULFILLED';
