@@ -102,7 +102,7 @@ type SaleCancelScope = 'all' | 'specific';
 
 function SaleCancelModal({ saleId, onClose, onConfirm }: {
   saleId: string; onClose: () => void; onConfirm: (cancelledLineIds: string[]) => void;
-) {
+}) {
   const [scope, setScope] = useState<SaleCancelScope>('all');
   const [selectedLines, setSelectedLines] = useState<Set<string>>(new Set());
   const [reason, setReason] = useState('');
