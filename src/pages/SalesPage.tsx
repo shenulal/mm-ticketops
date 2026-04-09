@@ -102,14 +102,14 @@ type SaleCancelScope = 'all' | 'specific';
 
 function SaleCancelModal({ saleId, onClose, onConfirm }: {
   saleId: string; onClose: () => void; onConfirm: (cancelledLineIds: string[]) => void;
-}) {
-  const sale = MOCK_SALES.find(s => s.id === saleId);
-  if (!sale) return null;
-  const saleLabel = sale.id.toUpperCase().replace('SALE', 'SALE-');
-
+) {
   const [scope, setScope] = useState<SaleCancelScope>('all');
   const [selectedLines, setSelectedLines] = useState<Set<string>>(new Set());
   const [reason, setReason] = useState('');
+
+  const sale = MOCK_SALES.find(s => s.id === saleId);
+  if (!sale) return null;
+  const saleLabel = sale.id.toUpperCase().replace('SALE', 'SALE-');
 
   const lineData = sale.lines.map((li, i) => {
     const distRows = MOCK_DIST_ROWS.filter(dr => dr.lineItemId === li.id);
