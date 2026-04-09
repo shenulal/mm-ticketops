@@ -28,6 +28,7 @@ interface LineGroup {
   venue: string;
   showSubGame: boolean;
   isPending: boolean;
+  isCancelled: boolean;
   rows: GuestRow[];
 }
 
