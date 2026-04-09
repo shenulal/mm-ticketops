@@ -124,6 +124,7 @@ const App = () => (
                   </RoleProtectedRoute>
                 } />
                 <Route path="/staff-queue" element={<StaffQueuePage />} />
+                <Route path="/staff-queue/:taskId" element={<StaffTaskDetailPage />} />
                 <Route path="/supplier-portals" element={
                   <RoleProtectedRoute allowedRoles={FULFILMENT_ROLES}>
                     <SupplierPortalsPage />
