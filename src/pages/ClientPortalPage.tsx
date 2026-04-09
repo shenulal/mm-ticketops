@@ -126,6 +126,27 @@ function TicketGroupSection({ group, onUpdateRow, saving }: {
 
   const completedInGroup = group.rows.filter(r => r.firstName && r.lastName && r.email && !emailErrors.has(r.distId)).length;
 
+  // Cancelled line
+  if (group.isCancelled) {
+    return (
+      <div className="mx-6 mt-4">
+        <div className="rounded-xl overflow-hidden border border-border bg-muted/30">
+          <div className="p-3 flex items-center justify-between bg-muted">
+            <span className="font-body text-sm font-bold text-muted-foreground line-through">
+              {group.sgName} — {group.lineItem.categoryLabel}
+            </span>
+            <span className="px-2 py-0.5 rounded-full font-body text-[10px] font-medium bg-destructive/10 text-destructive">CANCELLED</span>
+          </div>
+          <div className="p-5">
+            <p className="font-body text-sm text-muted-foreground">
+              {group.lineItem.categoryLabel} section has been removed from this booking. Contact your account manager for details.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (group.isPending) {
     return (
       <div className="mx-6 mt-4">
