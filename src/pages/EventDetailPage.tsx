@@ -565,13 +565,14 @@ export default function EventDetailPage() {
   const ctx = useAppContext();
   const { currentUser } = useAuth();
 
-  const event = ctx.events.find(e => e.id === id || e.code.toLowerCase().replace(/[^a-z0-9]/g, '-') === id);
-  if (!event) return <div className="p-10 text-center font-body text-muted-foreground">Event not found</div>;
-
   const [drawerMatch, setDrawerMatch] = useState<string | null>(null);
   const [showAddMatch, setShowAddMatch] = useState(false);
-  const matchObj = drawerMatch ? event.matches.find(m => m.id === drawerMatch) : null;
 
+  const event = ctx.events.find(e => e.id === id || e.code.toLowerCase().replace(/[^a-z0-9]/g, '-') === id);
+
+  if (!event) return <div className="p-10 text-center font-body text-muted-foreground">Event not found</div>;
+
+  const matchObj = drawerMatch ? event.matches.find(m => m.id === drawerMatch) : null;
   const vendorCount = ctx.vendorEventBridges.filter(b => b.eventId === event.id).length;
 
   return (
