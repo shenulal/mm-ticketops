@@ -20,6 +20,7 @@ import NewPurchasePage from "@/pages/NewPurchasePage";
 import SalesPage from "@/pages/SalesPage";
 import NewSalePage from "@/pages/NewSalePage";
 import DistributionPage from "@/pages/DistributionPage";
+import AllocationPreviewPage from "@/pages/AllocationPreviewPage";
 import StaffQueuePage from "@/pages/StaffQueuePage";
 import SupplierPortalsPage from "@/pages/SupplierPortalsPage";
 import ReportsPage from "@/pages/ReportsPage";
@@ -101,6 +102,11 @@ const App = () => (
                 <Route path="/distribution/allocate/:id" element={
                   <RoleProtectedRoute allowedRoles={FULFILMENT_ROLES}>
                     <DistributionPage />
+                  </RoleProtectedRoute>
+                } />
+                <Route path="/distribution/:saleId/preview" element={
+                  <RoleProtectedRoute allowedRoles={FULFILMENT_ROLES}>
+                    <AllocationPreviewPage />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/staff-queue" element={<StaffQueuePage />} />
