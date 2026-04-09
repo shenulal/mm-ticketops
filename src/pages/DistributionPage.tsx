@@ -178,7 +178,16 @@ export default function DistributionPage() {
 
   return (
     <div>
-      <h1 className="font-display text-[26px] mb-4 text-primary">Distribution &amp; Allocation</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="font-display text-[26px] text-primary">Distribution &amp; Allocation</h1>
+        <button
+          onClick={() => navigate('/distribution/auto-allocate')}
+          className="h-10 px-5 rounded-lg font-body text-sm font-bold bg-gradient-to-r from-accent to-[#E8C56A] text-primary hover:shadow-lg flex items-center gap-2"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Auto-Allocate Engine
+        </button>
+      </div>
 
       <div className="flex gap-6 border-b border-border mb-4">
         {TABS.map(t => (
