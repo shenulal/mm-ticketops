@@ -299,6 +299,16 @@ export default function DistributionPage() {
                             </td>
                           </tr>
 
+                          {/* Session context row */}
+                          {isLineExpanded && (
+                            <tr className="border-b border-border/30 bg-accent/5">
+                              <td />
+                              <td colSpan={6} className="px-4 py-1.5" style={{ paddingLeft: 28 }}>
+                                <span className="font-body text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Session: {sgName}</span>
+                              </td>
+                            </tr>
+                          )}
+
                           {/* Child distribution rows */}
                           {isLineExpanded && distRows.map(dr => {
                             const drSt = STATUS_CLS[dr.status] || STATUS_CLS['UNALLOCATED'];
