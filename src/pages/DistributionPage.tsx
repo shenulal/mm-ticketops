@@ -568,6 +568,13 @@ export default function DistributionPage() {
         {upgradeCtx && <UpgradeModal saleId={upgradeCtx.saleId} line={upgradeCtx.lineItem} lineIdx={upgradeCtx.lineIdx}
           onClose={() => setUpgradeCtx(null)} onConfirm={() => setUpgradeCtx(null)} />}
       </AnimatePresence>
+      <AnimatePresence>
+        {oversellCtx && <OversellResolutionDrawer
+          saleId={oversellCtx.saleId} lineItem={oversellCtx.lineItem} lineIdx={oversellCtx.lineIdx}
+          onClose={() => setOversellCtx(null)}
+          onResolved={() => { setAllocatedLineIds(prev => new Set(prev).add(oversellCtx.lineItem.id)); setOversellCtx(null); }}
+        />}
+      </AnimatePresence>
     </div>
   );
 }
