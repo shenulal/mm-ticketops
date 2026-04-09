@@ -27,6 +27,12 @@ import ReportsPage from "@/pages/ReportsPage";
 import ClientPortalPage from "@/pages/ClientPortalPage";
 import SupplierPortalPage from "@/pages/SupplierPortalPage";
 
+// Supplier Portal
+import SupplierLayout from "@/components/SupplierLayout";
+import SupplierDashboardPage from "@/pages/supplier/SupplierDashboardPage";
+import SupplierMatchPage from "@/pages/supplier/SupplierMatchPage";
+import SupplierSettingsPage from "@/pages/supplier/SupplierSettingsPage";
+
 // Master Data
 import VendorsPage from "@/pages/masters/VendorsPage";
 import ClientsPage from "@/pages/masters/ClientsPage";
@@ -63,6 +69,12 @@ const App = () => (
               <Route path="/client-portal/:token" element={<ClientPortalPage />} />
               <Route path="/supplier-portal/:token" element={<SupplierPortalPage />} />
 
+              {/* Supplier Portal — dedicated layout */}
+              <Route element={<ProtectedRoute><SupplierLayout /></ProtectedRoute>}>
+                <Route path="/supplier" element={<SupplierDashboardPage />} />
+                <Route path="/supplier/match/:matchId" element={<SupplierMatchPage />} />
+                <Route path="/supplier/settings" element={<SupplierSettingsPage />} />
+              </Route>
               {/* Protected routes — wrapped in AppShell */}
               <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
                 {/* MAIN */}

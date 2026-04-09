@@ -1,4 +1,4 @@
-export type UserRole = 'super_admin' | 'ops_manager' | 'sr_operator' | 'operator' | 'staff' | 'client';
+export type UserRole = 'super_admin' | 'ops_manager' | 'sr_operator' | 'operator' | 'staff' | 'client' | 'supplier';
 
 export interface AppUser {
   id: string;
@@ -6,6 +6,7 @@ export interface AppUser {
   email: string;
   role: UserRole;
   initials: string;
+  vendorGroups?: string[]; // supplier-only: which vendor groups they can see
 }
 
 export const MOCK_USERS: AppUser[] = [
@@ -15,6 +16,7 @@ export const MOCK_USERS: AppUser[] = [
   { id: 'u4', name: 'Priya Nair', email: 'operator@ticketops.ae', role: 'operator', initials: 'PN' },
   { id: 'u5', name: 'Mohammed Hassan', email: 'staff@ticketops.ae', role: 'staff', initials: 'MH' },
   { id: 'u6', name: 'David Clarke', email: 'client@roadtrips.ae', role: 'client', initials: 'DC' },
+  { id: 'u7', name: 'Clara Dufresne', email: 'supplier@poxami.com', role: 'supplier', initials: 'CD', vendorGroups: ['poxami'] },
 ];
 
 export const MOCK_EVENTS = [
