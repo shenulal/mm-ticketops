@@ -124,15 +124,15 @@ type CancelScope = 'all' | 'specific' | 'available-only';
 
 function PurchaseCancelModal({ purchaseId, onClose, onConfirm }: {
   purchaseId: string; onClose: () => void; onConfirm: (cancelledLineIds: string[]) => void;
-}) {
+) {
+  const [scope, setScope] = useState<CancelScope>('all');
+  const [selectedLines, setSelectedLines] = useState<Set<string>>(new Set());
+  const [reason, setReason] = useState('');
+
   const purchase = MOCK_PURCHASES.find(p => p.id === purchaseId);
   if (!purchase) return null;
   const purIdx = MOCK_PURCHASES.indexOf(purchase) + 1;
   const purLabel = `PUR-${String(purIdx).padStart(3, '0')}`;
-
-  const [scope, setScope] = useState<CancelScope>('all');
-  const [selectedLines, setSelectedLines] = useState<Set<string>>(new Set());
-  const [reason, setReason] = useState('');
 
   const lineData = purchase.lines.map((li, i) => {
     const stats = lineUnitStats(li.id);
