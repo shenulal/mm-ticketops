@@ -2,136 +2,172 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import RoleGuard from '@/components/RoleGuard';
-import { MOCK_PURCHASES, MOCK_MATCHES, MOCK_UNITS, MOCK_PURCHASE_LINE_ITEMS } from '@/data/mockData';
-import { X } from 'lucide-react';
+import {
+  MOCK_PURCHASES, MOCK_MATCHES, MOCK_UNITS, MOCK_PURCHASE_LINE_ITEMS,
+  MOCK_SUBGAMES, hasMultipleSubGames, type PurchaseLineItem,
+} from '@/data/mockData';
+import { ChevronRight, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-interface PurchaseRow {
-  id: string;
-  date: string;
-  match: string;
-  vendor: string;
-  category: string;
-  qty: number;
-  unitPriceAed: string;
-  totalAed: string;
-  available: number;
-  allocated: number;
-  lineItemId: string;
-  purchaseId: string;
+/* ── helpers ── */
+function getMatchLabel(matchId: string) {
+  const m = MOCK_MATCHES.find(x => x.id === matchId);
+  return m ? `${m.code} ${m.teams}` : matchId;
 }
 
-function buildRows(): PurchaseRow[] {
-  return MOCK_PURCHASE_LINE_ITEMS.map((li, i) => {
-    const purchase = MOCK_PURCHASES.find(p => p.id === li.purchaseId);
-    const match = MOCK_MATCHES.find(m => m.id === purchase?.matchId);
-    const units = MOCK_UNITS.filter(u => u.lineItemId === li.id);
-    const allocated = units.filter(u => u.status === 'ALLOCATED').length;
-    const available = units.length > 0 ? units.filter(u => u.status === 'AVAILABLE').length : li.qty;
-    return {
-      id: `PUR-${String(i + 1).padStart(3, '0')}`,
-      date: purchase?.date ?? '',
-      match: match ? `${match.code} ${match.teams}` : purchase?.matchId ?? '',
-      vendor: purchase?.vendor ?? '',
-      category: li.categoryLabel,
-      qty: li.qty,
-      unitPriceAed: `AED ${li.unitPrice.toLocaleString()}`,
-      totalAed: `AED ${li.lineTotal.toLocaleString()}`,
-      available: units.length > 0 ? available : li.qty,
-      allocated: units.length > 0 ? allocated : 0,
-      lineItemId: li.id,
-      purchaseId: li.purchaseId,
-    };
-  });
+function getSubGameName(subGameId: string) {
+  return MOCK_SUBGAMES.find(sg => sg.id === subGameId)?.name ?? '—';
 }
 
-function UnitDrawer({ purchase, onClose }: { purchase: PurchaseRow; onClose: () => void }) {
-  const [showAll, setShowAll] = useState(false);
-  const units = MOCK_UNITS.filter(u => u.lineItemId === purchase.lineItemId);
-  const fallbackUnits = units.length > 0 ? units : Array.from({ length: purchase.qty }, (_, i) => ({
-    id: `P${String(i + 1).padStart(5, '0')}`,
-    setId: 'PR0002-S01', setSize: purchase.qty, setPos: i + 1,
-    vendor: purchase.vendor, contract: '2025-100129', matchId: 'm01',
-    status: 'AVAILABLE' as const, allocatedToLineItemId: null,
-    purchaseId: purchase.purchaseId, lineItemId: purchase.lineItemId,
-    subGameId: '', categoryId: '', categoryLabel: purchase.category,
-  }));
+function lineUnitStats(lineItemId: string) {
+  const units = MOCK_UNITS.filter(u => u.lineItemId === lineItemId);
+  const allocated = units.filter(u => u.status === 'ALLOCATED').length;
+  const available = units.filter(u => u.status === 'AVAILABLE').length;
+  return { total: units.length, allocated, available };
+}
 
-  const allocated = fallbackUnits.filter(u => u.status === 'ALLOCATED').length;
-  const available = fallbackUnits.length - allocated;
-  const displayed = showAll ? fallbackUnits : fallbackUnits.slice(0, 24);
+/* ── Unit Drawer ── */
+type DrawerMode =
+  | { type: 'line'; purchaseId: string; lineItem: PurchaseLineItem }
+  | { type: 'purchase'; purchaseId: string };
+
+function UnitDrawer({ mode, onClose }: { mode: DrawerMode; onClose: () => void }) {
+  const purchase = MOCK_PURCHASES.find(p => p.id === mode.purchaseId);
+  const isLineMode = mode.type === 'line';
+  const lineItems = isLineMode ? [mode.lineItem] : (purchase?.lines ?? []);
+
+  // For grouped view, track collapsed state
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const toggleGroup = (id: string) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const title = isLineMode
+    ? `Units — PUR-${String(MOCK_PURCHASES.indexOf(purchase!) + 1).padStart(3, '0')} / Line ${lineItems[0].id.split('-').pop()} / ${lineItems[0].categoryLabel}`
+    : `Units — PUR-${String(MOCK_PURCHASES.indexOf(purchase!) + 1).padStart(3, '0')}`;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-foreground/30" onClick={onClose} />
-      <div className="relative w-[480px] max-w-full h-full bg-bg-card shadow-xl flex flex-col animate-in slide-in-from-right duration-200">
-        <div className="px-6 py-5 border-b" style={{ borderColor: '#E5E7EB' }}>
+      <motion.div
+        initial={{ x: 420, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: 420, opacity: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="relative w-[480px] max-w-full h-full bg-card shadow-xl flex flex-col z-10"
+      >
+        <div className="px-6 py-5 border-b border-border">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="font-display text-xl" style={{ color: '#0B2D5E' }}>Purchase Units — {purchase.id}</h3>
-              <p className="font-body text-sm mt-1" style={{ color: '#6B7280' }}>{purchase.category} · {purchase.vendor}</p>
+              <h3 className="font-display text-xl text-primary">{title}</h3>
+              {isLineMode && (
+                <p className="font-body text-xs text-muted-foreground mt-1">
+                  Sub-Game: {getSubGameName(lineItems[0].subGameId)}
+                </p>
+              )}
             </div>
             <button onClick={onClose} className="p-1 rounded-md hover:bg-muted"><X size={18} /></button>
-          </div>
-          <div className="flex gap-4 mt-3 font-body text-xs" style={{ color: '#6B7280' }}>
-            <span><strong className="text-foreground">{fallbackUnits.length}</strong> total</span>
-            <span><strong style={{ color: '#065F46' }}>{allocated}</strong> allocated</span>
-            <span><strong style={{ color: '#92400E' }}>{available}</strong> available</span>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-6 gap-2">
-            {displayed.map(u => {
-              const isAlloc = u.status === 'ALLOCATED';
-              return (
-                <div key={u.id} className="rounded-lg p-1.5 flex flex-col items-center justify-center text-center"
-                  style={{ width: 72, height: 60, backgroundColor: isAlloc ? '#D1FAE5' : '#FEF3C7',
-                    border: `1.5px solid ${isAlloc ? '#1A7A4A' : '#D97706'}`, color: isAlloc ? '#065F46' : '#92400E' }}>
-                  <span className="font-mono text-[10px] font-bold">{u.id}</span>
-                  <span className="font-body text-[9px] mt-0.5">
-                    {isAlloc ? `ALLOC · ${u.allocatedToLineItemId}` : `AVAIL · Pos ${u.setPos}`}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          {!showAll && fallbackUnits.length > 24 && (
-            <button onClick={() => setShowAll(true)} className="mt-3 font-body text-xs font-medium hover:underline" style={{ color: '#C9A84C' }}>
-              Show all {fallbackUnits.length} →
-            </button>
-          )}
+          {lineItems.map(li => {
+            const units = MOCK_UNITS.filter(u => u.lineItemId === li.id);
+            const isGroupCollapsed = collapsed[li.id];
+            const [showAll, setShowAll] = useState(false);
+            const displayed = showAll ? units : units.slice(0, 24);
+
+            return (
+              <div key={li.id} className="mb-6">
+                {!isLineMode && (
+                  <button
+                    onClick={() => toggleGroup(li.id)}
+                    className="flex items-center gap-2 mb-3 w-full text-left"
+                  >
+                    <ChevronRight
+                      size={14}
+                      className={`text-muted-foreground transition-transform ${!isGroupCollapsed ? 'rotate-90' : ''}`}
+                    />
+                    <span className="font-body text-sm font-semibold text-foreground">
+                      Line {li.id.split('-').pop()} — {li.categoryLabel} ({units.length} units)
+                    </span>
+                  </button>
+                )}
+
+                {(isLineMode || !isGroupCollapsed) && (
+                  <>
+                    <div className="grid grid-cols-6 gap-2">
+                      {displayed.map(u => {
+                        const isAlloc = u.status === 'ALLOCATED';
+                        return (
+                          <div
+                            key={u.id}
+                            className="rounded-lg p-1.5 flex flex-col items-center justify-center text-center"
+                            style={{
+                              width: 72, height: 60,
+                              backgroundColor: isAlloc ? 'hsl(var(--success-bg))' : 'hsl(var(--warning-bg))',
+                              border: `1.5px solid ${isAlloc ? 'hsl(var(--success))' : 'hsl(var(--warning))'}`,
+                              color: isAlloc ? '#065F46' : '#92400E',
+                            }}
+                          >
+                            <span className="font-mono text-[10px] font-bold">{u.id}</span>
+                            <span className="font-body text-[9px] mt-0.5">
+                              {isAlloc ? `ALLOC` : `AVAIL · Pos ${u.setPos}`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {!showAll && units.length > 24 && (
+                      <button onClick={() => setShowAll(true)} className="mt-3 font-body text-xs font-medium hover:underline text-accent">
+                        Show all {units.length} →
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        <div className="px-6 py-3 border-t font-body text-xs" style={{ borderColor: '#E5E7EB', color: '#6B7280' }}>
-          SetID: {fallbackUnits[0]?.setId} &nbsp;|&nbsp; SetSize: {fallbackUnits.length} &nbsp;|&nbsp; Contract: {fallbackUnits[0]?.contract}
+        <div className="px-6 py-3 border-t border-border font-body text-xs text-muted-foreground">
+          Purchase: {purchase?.id} &nbsp;|&nbsp; Vendor: {purchase?.vendor} &nbsp;|&nbsp; Contract: {purchase?.contract}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
 
+/* ── Main Page ── */
 export default function PurchasesPage() {
   const navigate = useNavigate();
   const [matchFilter, setMatchFilter] = useState('all');
   const [catFilter, setCatFilter] = useState('all');
   const [vendorFilter, setVendorFilter] = useState('all');
-  const [drawerPurchase, setDrawerPurchase] = useState<PurchaseRow | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [drawerMode, setDrawerMode] = useState<DrawerMode | null>(null);
 
-  const rows = buildRows().filter(r => {
-    if (matchFilter !== 'all' && !r.match.startsWith(matchFilter)) return false;
-    if (catFilter !== 'all' && r.category !== catFilter) return false;
-    if (vendorFilter !== 'all' && r.vendor !== vendorFilter) return false;
+  const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+
+  // Filter purchases
+  const purchases = MOCK_PURCHASES.filter(p => {
+    if (vendorFilter !== 'all' && p.vendor !== vendorFilter) return false;
+    if (matchFilter !== 'all') {
+      const m = MOCK_MATCHES.find(x => x.id === p.matchId);
+      if (m && m.code !== matchFilter) return false;
+    }
+    if (catFilter !== 'all') {
+      if (!p.lines.some(l => l.categoryLabel === catFilter)) return false;
+    }
     return true;
   });
 
-  const selectClass = "h-[38px] px-3 rounded-lg font-body text-sm bg-bg-card outline-none border border-border focus:ring-1 focus:ring-gold";
+  const selectClass = "h-[38px] px-3 rounded-lg font-body text-sm bg-card outline-none border border-border focus:ring-1 focus:ring-accent";
 
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <h1 className="font-display text-[26px]" style={{ color: '#0B2D5E' }}>Purchases</h1>
+        <h1 className="font-display text-[26px] text-primary">Purchases</h1>
         <RoleGuard roles={['super_admin', 'ops_manager', 'sr_operator', 'operator']}>
-          <button onClick={() => navigate('/purchases/new')} className="px-4 py-2 rounded-lg font-body text-sm font-medium transition-opacity hover:opacity-90" style={{ backgroundColor: '#0B2D5E', color: '#C9A84C' }}>
+          <button onClick={() => navigate('/purchases/new')} className="px-4 py-2 rounded-lg font-body text-sm font-medium transition-opacity hover:opacity-90 bg-primary text-accent">
             New Purchase +
           </button>
         </RoleGuard>
@@ -146,6 +182,7 @@ export default function PurchasesPage() {
         <select className={selectClass} value={catFilter} onChange={e => setCatFilter(e.target.value)}>
           <option value="all">All Categories</option>
           <option>Top Cat 1</option><option>Cat 2</option><option>Cat 3</option><option>Cat 4</option>
+          <option>Grandstand A</option><option>Paddock Club</option>
         </select>
         <select className={selectClass} value={vendorFilter} onChange={e => setVendorFilter(e.target.value)}>
           <option value="all">All Vendors</option>
@@ -153,46 +190,119 @@ export default function PurchasesPage() {
         </select>
       </div>
 
-      <div className="bg-bg-card rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-[900px]">
+          <table className="w-full text-left min-w-[1000px]">
             <thead>
-              <tr style={{ backgroundColor: '#0B2D5E', height: 44 }}>
-                {['Purchase ID', 'Date', 'Match', 'Vendor', 'Category', 'Qty', 'Unit Price', 'Total Value', 'Unit Status', 'Actions'].map(h => (
-                  <th key={h} className="px-4 py-2.5 font-body text-[13px] font-bold" style={{ color: 'white' }}>{h}</th>
+              <tr className="bg-primary h-[44px]">
+                {['', 'Purchase ID', 'Date', 'Match', 'Vendor', 'Contract', 'Lines', 'Total Qty', 'Total Value', 'Status', 'Actions'].map(h => (
+                  <th key={h} className="px-4 py-2.5 font-body text-[13px] font-bold text-primary-foreground">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {rows.map((r, i) => {
-                const total = r.available + r.allocated;
-                const allocPct = total > 0 ? (r.allocated / total) * 100 : 0;
+              {purchases.map((p, pi) => {
+                const isExpanded = expanded[p.id];
+                const purIdx = MOCK_PURCHASES.indexOf(p) + 1;
+                const purLabel = `PUR-${String(purIdx).padStart(3, '0')}`;
+                const matchLabel = getMatchLabel(p.matchId);
+                const isMultiSg = hasMultipleSubGames(p.matchId);
+
                 return (
-                  <tr key={r.id} className="transition-colors cursor-default"
-                    style={{ backgroundColor: i % 2 === 1 ? '#F8F9FC' : 'white' }}
-                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#EEF3FF')}
-                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = i % 2 === 1 ? '#F8F9FC' : 'white')}>
-                    <td className="px-4 py-3 font-mono text-xs font-bold" style={{ color: '#0B2D5E' }}>{r.id}</td>
-                    <td className="px-4 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>{r.date}</td>
-                    <td className="px-4 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>{r.match}</td>
-                    <td className="px-4 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>{r.vendor}</td>
-                    <td className="px-4 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>{r.category}</td>
-                    <td className="px-4 py-3 font-mono text-[13px]" style={{ color: '#1A1A2E' }}>{r.qty}</td>
-                    <td className="px-4 py-3 font-mono text-[13px]" style={{ color: '#1A1A2E' }}>{r.unitPriceAed}</td>
-                    <td className="px-4 py-3 font-mono text-[13px] font-medium" style={{ color: '#1A1A2E' }}>{r.totalAed}</td>
-                    <td className="px-4 py-3">
-                      <div className="font-body text-[11px] mb-1" style={{ color: '#6B7280' }}>{r.available} Avail / {r.allocated} Alloc</div>
-                      <div className="w-full h-1.5 rounded-full flex overflow-hidden" style={{ backgroundColor: '#E5E7EB' }}>
-                        <div className="h-full" style={{ width: `${100 - allocPct}%`, backgroundColor: '#D97706' }} />
-                        <div className="h-full" style={{ width: `${allocPct}%`, backgroundColor: '#1A7A4A' }} />
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <button onClick={() => setDrawerPurchase(r)} className="px-3 py-1.5 rounded-lg font-body text-xs font-medium transition-opacity hover:opacity-90" style={{ backgroundColor: '#0B2D5E', color: 'white' }}>
-                        View Units
-                      </button>
-                    </td>
-                  </tr>
+                  <Fragment key={p.id}>
+                    {/* Parent row */}
+                    <tr
+                      className="transition-colors cursor-pointer border-b border-border"
+                      style={{ backgroundColor: pi % 2 === 1 ? 'hsl(var(--muted))' : 'hsl(var(--card))' }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#EEF3FF')}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = pi % 2 === 1 ? 'hsl(220 14% 96%)' : 'white')}
+                      onClick={() => toggleExpand(p.id)}
+                    >
+                      <td className="px-4 py-3 w-8">
+                        <ChevronRight
+                          size={16}
+                          className={`text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                        />
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs font-bold text-primary">{purLabel}</td>
+                      <td className="px-4 py-3 font-body text-[13px] text-foreground">{p.date}</td>
+                      <td className="px-4 py-3 font-body text-[13px] text-foreground">{matchLabel}</td>
+                      <td className="px-4 py-3 font-body text-[13px] text-foreground">{p.vendor}</td>
+                      <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">{p.contract}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-0.5 rounded-full bg-muted font-body text-[11px] font-medium text-foreground">
+                          {p.lines.length} lines
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[13px] text-foreground">{p.totalQty}</td>
+                      <td className="px-4 py-3 font-mono text-[13px] font-medium text-foreground">AED {p.totalValue.toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-success/10 text-success">{p.status}</span>
+                      </td>
+                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                        <div className="flex gap-2">
+                          <button className="font-body text-xs text-primary hover:underline">Edit</button>
+                          <button
+                            onClick={() => setDrawerMode({ type: 'purchase', purchaseId: p.id })}
+                            className="font-body text-xs text-primary hover:underline"
+                          >
+                            View Units
+                          </button>
+                          <button className="font-body text-xs text-destructive hover:underline">Cancel</button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* Line item sub-rows */}
+                    {isExpanded && p.lines.map((li, liIdx) => {
+                      const stats = lineUnitStats(li.id);
+                      const allocPct = stats.total > 0 ? (stats.allocated / stats.total) * 100 : 0;
+                      const sgName = isMultiSg ? getSubGameName(li.subGameId) : '—';
+
+                      return (
+                        <tr
+                          key={li.id}
+                          className="bg-muted/50 border-b border-border/50"
+                        >
+                          <td className="px-4 py-2.5">
+                            {/* connecting line */}
+                            <div className="flex items-center justify-center">
+                              <div className="w-px h-full bg-border" />
+                            </div>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-primary/10 text-primary">
+                              L{liIdx + 1}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 font-body text-[12px] text-muted-foreground">{sgName}</td>
+                          <td className="px-4 py-2.5 font-body text-[13px] text-foreground">{li.categoryLabel}</td>
+                          <td className="px-4 py-2.5 font-mono text-[12px] text-foreground">{li.qty}</td>
+                          <td className="px-4 py-2.5 font-mono text-[12px] text-foreground">AED {li.unitPrice.toLocaleString()}</td>
+                          <td className="px-4 py-2.5 font-mono text-[12px] font-medium text-foreground">AED {li.lineTotal.toLocaleString()}</td>
+                          <td colSpan={2} className="px-4 py-2.5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-24 h-1.5 rounded-full flex overflow-hidden bg-border">
+                                <div className="h-full bg-success" style={{ width: `${allocPct}%` }} />
+                                <div className="h-full bg-warning" style={{ width: `${100 - allocPct}%` }} />
+                              </div>
+                              <span className="font-body text-[11px] text-muted-foreground whitespace-nowrap">
+                                {stats.allocated}/{stats.total} — {stats.total > 0 ? Math.round(allocPct) : 0}% allocated
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2.5" colSpan={2}>
+                            <button
+                              onClick={() => setDrawerMode({ type: 'line', purchaseId: p.id, lineItem: li })}
+                              className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-primary text-primary-foreground hover:opacity-90"
+                            >
+                              View L{liIdx + 1} Units
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
                 );
               })}
             </tbody>
@@ -200,7 +310,12 @@ export default function PurchasesPage() {
         </div>
       </div>
 
-      {drawerPurchase && <UnitDrawer purchase={drawerPurchase} onClose={() => setDrawerPurchase(null)} />}
+      <AnimatePresence>
+        {drawerMode && <UnitDrawer mode={drawerMode} onClose={() => setDrawerMode(null)} />}
+      </AnimatePresence>
     </div>
   );
 }
+
+// Need Fragment import
+import { Fragment } from 'react';
