@@ -34,7 +34,7 @@ const App = () => (
 
             {/* Client/Supplier portals — no shell */}
             <Route path="/client-portal/:token" element={<ClientPortalPage />} />
-            <Route path="/supplier-portal/:token" element={<PlaceholderPage title="Supplier Portal" />} />
+            <Route path="/supplier-portal/:token" element={<SupplierPortalPage />} />
 
             {/* App shell routes */}
             <Route element={<AppShell />}>
@@ -48,7 +48,7 @@ const App = () => (
               <Route path="/distribution" element={<DistributionPage />} />
               <Route path="/distribution/allocate/:id" element={<DistributionPage />} />
               <Route path="/staff-queue" element={<StaffQueuePage />} />
-              <Route path="/reports" element={<PlaceholderPage title="Reports" />} />
+              <Route path="/reports" element={<ReportsPage />} />
               <Route path="/users" element={<PlaceholderPage title="Users" />} />
               <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
             </Route>
