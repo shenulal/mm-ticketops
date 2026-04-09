@@ -1,3 +1,4 @@
+/* @refresh reset */
 import React, { createContext, useContext, useState } from 'react';
 import { useAppContext, type EventDef } from '@/context/AppContext';
 
