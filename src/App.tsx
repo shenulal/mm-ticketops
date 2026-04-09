@@ -69,6 +69,12 @@ const App = () => (
               <Route path="/client-portal/:token" element={<ClientPortalPage />} />
               <Route path="/supplier-portal/:token" element={<SupplierPortalPage />} />
 
+              {/* Supplier Portal — dedicated layout */}
+              <Route element={<ProtectedRoute><SupplierLayout /></ProtectedRoute>}>
+                <Route path="/supplier" element={<SupplierDashboardPage />} />
+                <Route path="/supplier/match/:matchId" element={<SupplierMatchPage />} />
+                <Route path="/supplier/settings" element={<SupplierSettingsPage />} />
+              </Route>
               {/* Protected routes — wrapped in AppShell */}
               <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
                 {/* MAIN */}
