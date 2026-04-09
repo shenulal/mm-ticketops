@@ -612,7 +612,7 @@ export default function SalesPage() {
                             <div className="flex gap-2">
                               {li.status === 'PENDING_APPROVAL' && isOversell ? (
                                 <>
-                                  <button onClick={() => setModalCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
+                                  <button onClick={() => setOversellCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
                                   <button onClick={() => setUpgradeCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Change Category</button>
                                 </>
                               ) : (
