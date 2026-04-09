@@ -243,9 +243,9 @@ export default function DistributionPage() {
                       </td>
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                         <div className="flex gap-2">
-                          <button onClick={() => setAllocateAllSale(s.id)}
+                          <button onClick={() => navigate(`/distribution/${s.id}/preview`)}
                             className="px-3 py-1.5 rounded-lg font-body text-xs font-medium bg-accent text-accent-foreground hover:opacity-90">
-                            Allocate All
+                            Allocate
                           </button>
                           <button className="font-body text-xs text-primary hover:underline">Upgrade</button>
                           <button className="font-body text-xs text-destructive hover:underline">Cancel</button>
