@@ -107,7 +107,7 @@ export interface MatchDef {
 export interface EventDef {
   id: string; code: string; name: string;
   eventType: 'SPORTS_TOURNAMENT' | 'RACING_SEASON' | 'RACING_WEEKEND' | 'CONCERT' | 'CONFERENCE' | 'EXPO' | 'OTHER';
-  status: 'PLANNING' | 'PROCUREMENT' | 'SELLING' | 'ALLOCATING' | 'DISPATCHING' | 'COMPLETED' | 'ARCHIVED';
+  status: 'DRAFT' | 'PLANNING' | 'BUYING' | 'SELLING' | 'ALLOCATING' | 'DISPATCHING' | 'CLOSED' | 'ARCHIVED';
   startDate: string; endDate: string; defaultCurrency: string;
   dispatchBufferHours: number; portalTokenExpiryDays: number;
   allowOversell: boolean; ownerUserId: string;
@@ -212,7 +212,7 @@ function cat(id: string, displayName: string, level: number, hint = ''): SubGame
 const INITIAL_EVENTS: EventDef[] = [
   {
     id: 'evt1', code: 'FIFA-WC-2026', name: 'FIFA World Cup 2026',
-    eventType: 'SPORTS_TOURNAMENT', status: 'SELLING',
+     eventType: 'SPORTS_TOURNAMENT', status: 'SELLING',
     startDate: '2026-06-11', endDate: '2026-07-19', defaultCurrency: 'AED',
     dispatchBufferHours: 48, portalTokenExpiryDays: 14, allowOversell: false,
     ownerUserId: 'u2', logoUrl: '', bannerUrl: '',
