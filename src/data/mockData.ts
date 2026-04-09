@@ -356,6 +356,167 @@ export function getInventoryAvailable(subGameId: string, categoryId: string): nu
   ).length;
 }
 
+// ─── INVENTORY ANALYTICS ───────────────────────────────
+
+export function getInventorySummary(subGameId?: string, categoryId?: string) {
+  const units = MOCK_UNITS.filter(u =>
+    (!subGameId || u.subGameId === subGameId) &&
+    (!categoryId || u.categoryId === categoryId)
+  );
+  return {
+    total:      units.length,
+    available:  units.filter(u => u.status === 'AVAILABLE').length,
+    allocated:  units.filter(u => u.status === 'ALLOCATED').length,
+    dispatched: MOCK_DIST_ROWS.filter(r =>
+      r.dispatchStatus === 'SENT' &&
+      (!subGameId || r.subGameId === subGameId) &&
+      (!categoryId || r.categoryId === categoryId)
+    ).length,
+  };
+}
+
+// ─── REVENUE ANALYTICS ────────────────────────────────
+
+export function getRevenueSummary(eventId?: string, matchId?: string, subGameId?: string) {
+  const lines = MOCK_SALE_LINE_ITEMS.filter(l => {
+    if (subGameId && l.subGameId !== subGameId) return false;
+    if (matchId) {
+      const sg = MOCK_SUBGAMES.find(s => s.id === l.subGameId);
+      if (sg && sg.matchId !== matchId) return false;
+    }
+    return true;
+  });
+  const purchaseLines = MOCK_PURCHASE_LINE_ITEMS.filter(l => {
+    if (subGameId && l.subGameId !== subGameId) return false;
+    return true;
+  });
+  const totalSaleRevenue  = lines.reduce((s, l) => s + l.lineTotal, 0);
+  const totalPurchaseCost = purchaseLines.reduce((s, l) => s + l.lineTotal, 0);
+  const realisedRevenue   = lines
+    .filter(l => l.status === 'ALLOCATED')
+    .reduce((s, l) => {
+      const dispatched = MOCK_DIST_ROWS.filter(r =>
+        r.lineItemId === l.id && r.dispatchStatus === 'SENT'
+      ).length;
+      return s + dispatched * l.unitPrice;
+    }, 0);
+  const committedRevenue = lines
+    .filter(l => l.status === 'ALLOCATED')
+    .reduce((s, l) => s + l.lineTotal, 0) - realisedRevenue;
+  const pipelineRevenue = lines
+    .filter(l => l.status === 'UNALLOCATED')
+    .reduce((s, l) => s + l.lineTotal, 0);
+  const atRiskRevenue = lines
+    .filter(l => l.status === 'PENDING_APPROVAL')
+    .reduce((s, l) => s + l.lineTotal, 0);
+  const grossMargin = totalSaleRevenue - totalPurchaseCost;
+  const marginPct   = totalPurchaseCost > 0
+    ? ((grossMargin / totalPurchaseCost) * 100).toFixed(1)
+    : '0.0';
+  const unsoldInventoryValue = MOCK_PURCHASE_LINE_ITEMS
+    .reduce((s, pl) => {
+      const avail = getInventoryAvailable(pl.subGameId, pl.categoryId);
+      return s + avail * pl.unitPrice;
+    }, 0);
+  return { totalSaleRevenue, totalPurchaseCost, grossMargin, marginPct,
+    realisedRevenue, committedRevenue, pipelineRevenue, atRiskRevenue,
+    unsoldInventoryValue };
+}
+
+// ─── SELL-THROUGH BY CATEGORY ───────────────────────────
+
+export function getSellThroughByCat(subGameId: string) {
+  const sg = MOCK_SUBGAMES.find(s => s.id === subGameId);
+  if (!sg) return [];
+  return sg.categories.map(cat => {
+    const purchased = MOCK_PURCHASE_LINE_ITEMS
+      .filter(l => l.subGameId === subGameId && l.categoryId === cat.id)
+      .reduce((s, l) => s + l.qty, 0);
+    const sold = MOCK_SALE_LINE_ITEMS
+      .filter(l => l.subGameId === subGameId && l.categoryId === cat.id)
+      .reduce((s, l) => s + l.qty, 0);
+    const dispatched = MOCK_DIST_ROWS
+      .filter(r => r.subGameId === subGameId && r.categoryId === cat.id && r.dispatchStatus === 'SENT')
+      .length;
+    const pct = purchased > 0 ? Math.round((sold / purchased) * 100) : 0;
+    const revSold = MOCK_SALE_LINE_ITEMS
+      .filter(l => l.subGameId === subGameId && l.categoryId === cat.id)
+      .reduce((s, l) => s + l.lineTotal, 0);
+    const costPurch = MOCK_PURCHASE_LINE_ITEMS
+      .filter(l => l.subGameId === subGameId && l.categoryId === cat.id)
+      .reduce((s, l) => s + l.lineTotal, 0);
+    return { ...cat, purchased, sold, dispatched, sellThroughPct: pct,
+      revenueFromSales: revSold, purchaseCost: costPurch,
+      margin: revSold - costPurch };
+  });
+}
+
+// ─── CLIENT REVENUE BREAKDOWN ────────────────────────────
+
+export function getRevenueByClient() {
+  const clients = [...new Set(MOCK_SALES.map(s => s.client))];
+  return clients.map(client => {
+    const sales = MOCK_SALES.filter(s => s.client === client);
+    const total = sales.reduce((s, sale) => s + sale.totalValue, 0);
+    const lineCount = sales.reduce((s, sale) => s + sale.lines.length, 0);
+    return { client, totalRevenue: total, saleCount: sales.length, lineCount };
+  }).sort((a, b) => b.totalRevenue - a.totalRevenue);
+}
+
+// ─── DISPATCH URGENCY ────────────────────────────────────
+
+export function getDispatchUrgency(matchId: string) {
+  const match = MOCK_MATCHES.find(m => m.id === matchId);
+  if (!match) return { daysToEvent: 0, totalTickets: 0, sent: 0, pending: 0, urgent: false };
+  const eventDate = new Date('2026-06-21');
+  const today = new Date('2026-04-17');
+  const daysToEvent = Math.floor((eventDate.getTime() - today.getTime()) / (1000 * 86400));
+  const allRows = MOCK_DIST_ROWS.filter(r => {
+    const sg = MOCK_SUBGAMES.find(s => s.id === r.subGameId);
+    return sg && sg.matchId === matchId;
+  });
+  const sent = allRows.filter(r => r.dispatchStatus === 'SENT').length;
+  const pending = allRows.length - sent;
+  return { daysToEvent, totalTickets: allRows.length, sent, pending,
+    urgent: daysToEvent <= 7 && pending > 0 };
+}
+
+// ─── PORTAL COMPLETION ───────────────────────────────────
+
+export function getPortalFunnel(saleId: string) {
+  const sale = MOCK_SALES.find(s => s.id === saleId);
+  if (!sale) return null;
+  const rows = MOCK_DIST_ROWS.filter(r => r.saleId === saleId);
+  const total = rows.length;
+  const hasName = rows.filter(r => r.clientFirstName && r.clientLastName).length;
+  const hasEmail = rows.filter(r => r.clientEmail).length;
+  const fullyFilled = rows.filter(r => r.clientFirstName && r.clientLastName && r.clientEmail).length;
+  return { total, hasName, hasEmail, fullyFilled,
+    completionPct: total > 0 ? Math.round((fullyFilled / total) * 100) : 0 };
+}
+
+// ─── STAFF PERFORMANCE (simplified mock) ────────────────
+
+export function getStaffPerformance() {
+  return MOCK_USERS.filter(u => u.role === 'staff').map(u => {
+    const tasks = MOCK_STAFF_TASKS.filter(t => t.assignedTo === u.id);
+    const sent = tasks.filter(t => t.status === 'SENT').length;
+    return { name: u.name, total: tasks.length, sent, pending: tasks.length - sent,
+      completionRate: tasks.length > 0 ? Math.round((sent / tasks.length) * 100) : 0 };
+  });
+}
+
+// ─── REVENUE OVER TIME (mock daily data) ─────────────────
+
+export const MOCK_REVENUE_TIMELINE = [
+  { date: 'Apr 10', saleRevenue: 0,      purchaseCost: 0,      margin: 0 },
+  { date: 'Apr 12', saleRevenue: 0,      purchaseCost: 750795, margin: -750795 },
+  { date: 'Apr 14', saleRevenue: 0,      purchaseCost: 750795, margin: -750795 },
+  { date: 'Apr 16', saleRevenue: 716692, purchaseCost: 750795, margin: -34103 },
+  { date: 'Apr 17', saleRevenue: 716692, purchaseCost: 750795, margin: -34103 },
+  { date: 'Apr 20', saleRevenue: 716692, purchaseCost: 750795, margin: -34103 },
+];
+
 // === STAFF TASKS (kept for StaffQueuePage / SupplierPortalPage) ===
 
 export const MOCK_STAFF_TASKS = [
