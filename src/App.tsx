@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import AppShell from "@/components/AppShell";
 import LoginPage from "@/pages/LoginPage";
 import PlaceholderPage from "@/pages/PlaceholderPage";
+import DashboardPage from "@/pages/DashboardPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,7 +29,7 @@ const App = () => (
 
             {/* App shell routes */}
             <Route element={<AppShell />}>
-              <Route path="/dashboard" element={<PlaceholderPage title="Dashboard" />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/events" element={<PlaceholderPage title="Events" />} />
               <Route path="/events/:id" element={<PlaceholderPage title="Event Detail" />} />
               <Route path="/purchases" element={<PlaceholderPage title="Purchases" />} />
