@@ -102,6 +102,7 @@ function AllocateAllModal({ saleId, onClose, onConfirm }: { saleId: string; onCl
 
 /* ── Main Page ── */
 export default function DistributionPage() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('all');
   const [catFilter, setCatFilter] = useState('all');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
