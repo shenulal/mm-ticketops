@@ -11,6 +11,7 @@ import {
 import { Activity, GitBranch, Package, TrendingUp } from 'lucide-react';
 import DashboardControlBar, { type DashboardFilters } from './DashboardControlBar';
 import { CHART_COLORS, ChartCard, CUSTOM_TOOLTIP_STYLE } from './chartHelpers';
+import ActionCenter from './ActionCenter';
 
 function KPI({ label, value, sub, borderColor, icon: Icon, iconColor, badge }: {
   label: string; value: string; sub: string; borderColor: string; icon: any; iconColor: string; badge?: string;
@@ -84,6 +85,7 @@ export default function SrOperatorDashboard() {
   return (
     <div>
       <DashboardControlBar filters={filters} onChange={upd} showViewMode />
+      <ActionCenter />
       <div className="p-6 space-y-6">
         {/* KPIs */}
         <div className="flex gap-4">
