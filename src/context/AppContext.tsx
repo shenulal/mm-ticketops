@@ -566,6 +566,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateNotificationTemplate = useCallback((id: string, data: Partial<NotificationTemplate>) =>
     setNotificationTemplates(prev => prev.map(t => t.id === id ? { ...t, ...data } : t)), []);
+  const addNotificationTemplate = useCallback((t: Omit<NotificationTemplate, 'id'>) =>
+    setNotificationTemplates(prev => [...prev, { ...t, id: uid() }]), []);
+  const addNotificationTrigger = useCallback((t: Omit<NotificationTrigger, 'id'>) =>
+    setNotificationTriggers(prev => [...prev, { ...t, id: uid() }]), []);
+  const updateNotificationTrigger = useCallback((id: string, data: Partial<NotificationTrigger>) =>
+    setNotificationTriggers(prev => prev.map(t => t.id === id ? { ...t, ...data } : t)), []);
+  const deleteNotificationTrigger = useCallback((id: string) =>
+    setNotificationTriggers(prev => prev.filter(t => t.id !== id)), []);
+  const addNotificationLogEntry = useCallback((entry: Omit<NotificationLogEntry, 'id'>) =>
+    setNotificationLog(prev => [...prev, { ...entry, id: uid() }]), []);
+  const getTriggersForTemplate = useCallback((templateId: string) =>
+    notificationTriggers.filter(t => t.templateId === templateId), [notificationTriggers]);
+  const getLogForTemplate = useCallback((templateId: string) =>
+    notificationLog.filter(l => l.templateId === templateId).sort((a, b) => b.sentAt.localeCompare(a.sentAt)), [notificationLog]);
+
   const setVendorEventBridge = useCallback((bridge: VendorEventBridge) =>
     setVendorEventBridges(prev => {
       const idx = prev.findIndex(b => b.id === bridge.id);
@@ -595,7 +610,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const value = useMemo<AppContextType>(() => ({
     organisation, settings, currencies, venues, vendors, vendorEventBridges,
-    clients, contracts, notificationTemplates, events, matches, subGames,
+    clients, contracts, notificationTemplates, notificationTriggers, notificationLog,
+    events, matches, subGames,
     vendorCredentials, credentialHistory,
     getEvent, getMatch, getSubGame, getSubGamesForMatch, hasMultipleSubGames,
     getCategoriesForSubGame, getHierarchyForSubGame, getMatchesForEvent,
@@ -607,12 +623,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addCurrency, updateCurrency,
     addEvent, updateEvent, addMatchToEvent, updateMatch,
     addSubGameToMatch, updateSubGame, addCategoryToSubGame, updateCategory,
-    updateNotificationTemplate, setVendorEventBridge,
+    updateNotificationTemplate, addNotificationTemplate,
+    addNotificationTrigger, updateNotificationTrigger, deleteNotificationTrigger,
+    addNotificationLogEntry, getTriggersForTemplate, getLogForTemplate,
+    setVendorEventBridge,
     addVendorCredential, updateVendorCredential, addCredentialHistoryEntry,
     getCredentialsForVendor, getCredentialHistory, getBestCredential,
   }), [
     organisation, settings, currencies, venues, vendors, vendorEventBridges,
-    clients, contracts, notificationTemplates, events, matches, subGames,
+    clients, contracts, notificationTemplates, notificationTriggers, notificationLog,
+    events, matches, subGames,
     vendorCredentials, credentialHistory,
     getEvent, getMatch, getSubGame, getSubGamesForMatch, hasMultipleSubGames,
     getCategoriesForSubGame, getHierarchyForSubGame, getMatchesForEvent,
@@ -624,7 +644,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addCurrency, updateCurrency,
     addEvent, updateEvent, addMatchToEvent, updateMatch,
     addSubGameToMatch, updateSubGame, addCategoryToSubGame, updateCategory,
-    updateNotificationTemplate, setVendorEventBridge,
+    updateNotificationTemplate, addNotificationTemplate,
+    addNotificationTrigger, updateNotificationTrigger, deleteNotificationTrigger,
+    addNotificationLogEntry, getTriggersForTemplate, getLogForTemplate,
+    setVendorEventBridge,
     addVendorCredential, updateVendorCredential, addCredentialHistoryEntry,
     getCredentialsForVendor, getCredentialHistory, getBestCredential,
   ]);
