@@ -365,6 +365,8 @@ interface AppContextType {
   clients: Client[];
   contracts: Contract[];
   notificationTemplates: NotificationTemplate[];
+  notificationTriggers: NotificationTrigger[];
+  notificationLog: NotificationLogEntry[];
   events: EventDef[];
   vendorCredentials: VendorCredential[];
   credentialHistory: CredentialHistoryEntry[];
@@ -414,6 +416,13 @@ interface AppContextType {
   addCategoryToSubGame(subGameId: string, category: Omit<SubGameCategory, 'id'>): void;
   updateCategory(subGameId: string, categoryId: string, data: Partial<SubGameCategory>): void;
   updateNotificationTemplate(id: string, data: Partial<NotificationTemplate>): void;
+  addNotificationTemplate(t: Omit<NotificationTemplate, 'id'>): void;
+  addNotificationTrigger(t: Omit<NotificationTrigger, 'id'>): void;
+  updateNotificationTrigger(id: string, data: Partial<NotificationTrigger>): void;
+  deleteNotificationTrigger(id: string): void;
+  addNotificationLogEntry(entry: Omit<NotificationLogEntry, 'id'>): void;
+  getTriggersForTemplate(templateId: string): NotificationTrigger[];
+  getLogForTemplate(templateId: string): NotificationLogEntry[];
   setVendorEventBridge(bridge: VendorEventBridge): void;
   addVendorCredential(cred: Omit<VendorCredential, 'id'>): void;
   updateVendorCredential(id: string, data: Partial<VendorCredential>): void;
