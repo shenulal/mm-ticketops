@@ -19,6 +19,8 @@ function lineUnitStats(lineItemId: string) {
   const available = units.filter(u => u.status === 'AVAILABLE').length;
   return { total: units.length, allocated, available };
 }
+function getMatchLabel(matchId: string) { const m = MOCK_MATCHES.find(x => x.id === matchId); return m ? `${m.code} ${m.teams}` : matchId; }
+function getSubGameName(sgId: string) { return MOCK_SUBGAMES.find(sg => sg.id === sgId)?.name ?? '—'; }
 
 /* ── Unit Drawer ── */
 type DrawerMode =
