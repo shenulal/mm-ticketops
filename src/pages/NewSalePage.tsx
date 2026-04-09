@@ -1,22 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import {
-  MOCK_MATCHES, MOCK_SUBGAMES, getSubGamesForMatch, hasMultipleSubGames,
-  getCategoriesForSubGame, getInventoryAvailable, type SubGame, type Category,
-} from '@/data/mockData';
+import { useAppContext } from '@/context/AppContext';
+import { useEvent } from '@/context/EventContext';
+import { getInventoryAvailable } from '@/data/mockData';
 import { ChevronRight, Lock, CheckCircle, AlertTriangle, Loader2, CalendarIcon, Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const CLIENTS = [
-  { value: 'Roadtrips', contract: '2025-10885' },
-  { value: 'Blend Group', contract: '2025-20001' },
-  { value: 'One2Travel', contract: '2025-30002' },
-  { value: 'Al Habtoor', contract: '' },
-];
 
 interface LineItem {
   id: string;
