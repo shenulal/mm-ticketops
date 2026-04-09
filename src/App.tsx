@@ -9,6 +9,7 @@ import LoginPage from "@/pages/LoginPage";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import DashboardPage from "@/pages/DashboardPage";
 import PurchasesPage from "@/pages/PurchasesPage";
+import NewPurchasePage from "@/pages/NewPurchasePage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
