@@ -30,6 +30,7 @@ interface MasterPageProps<T> {
   writeRoles?: string[];
   readRoles?: string[];
   extraHeaderContent?: ReactNode;
+  headerNote?: string;
 }
 
 // ─── Hook for filtering/sorting ─────────────────────────
@@ -73,7 +74,7 @@ export function useMasterFilters<T>(
 // ─── Master Page Component ──────────────────────────────
 export default function MasterPage<T>({
   title, entityName, data, columns, filters: filterDefs, searchFields,
-  getId, getIsActive, renderDrawer, renderCreateModal, writeRoles, extraHeaderContent,
+  getId, getIsActive, renderDrawer, renderCreateModal, writeRoles, extraHeaderContent, headerNote,
 }: MasterPageProps<T>) {
   const { currentUser } = useAuth();
   const canWrite = writeRoles ? writeRoles.includes(currentUser?.role ?? '') : true;
