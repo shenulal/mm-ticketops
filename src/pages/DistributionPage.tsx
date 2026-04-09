@@ -1,208 +1,350 @@
-import React, { useState, useMemo } from 'react';
-import { MOCK_SALES, MOCK_MATCHES, MOCK_SALE_LINE_ITEMS, MOCK_UNITS } from '@/data/mockData';
-import { ChevronRight, X, Check, Loader2, CheckCircle } from 'lucide-react';
+import React, { useState, useMemo, Fragment } from 'react';
+import {
+  MOCK_SALES, MOCK_MATCHES, MOCK_DIST_ROWS, MOCK_UNITS, MOCK_SUBGAMES,
+  getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable,
+  type SaleLineItem, type DistRow,
+} from '@/data/mockData';
+import { ChevronRight, X, Check, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Tab = 'all' | 'unallocated' | 'allocated' | 'fulfilled';
 
-const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = {
-  ALLOCATED: { label: 'ALLOCATED', bg: '#D1FAE5', text: '#065F46' },
-  PENDING_APPROVAL: { label: 'PENDING', bg: '#FEF3C7', text: '#92400E' },
-  UNALLOCATED: { label: 'UNALLOCATED', bg: '#F3F4F6', text: '#374151' },
-  FULFILLED: { label: 'FULFILLED', bg: '#064E3B', text: '#FFFFFF' },
+const STATUS_CLS: Record<string, { label: string; cls: string }> = {
+  ALLOCATED:        { label: 'ALLOCATED',   cls: 'bg-success/15 text-success' },
+  SENT:             { label: 'SENT',        cls: 'bg-success text-primary-foreground' },
+  PENDING_APPROVAL: { label: 'PENDING ⚠',  cls: 'bg-warning/15 text-warning' },
+  UNALLOCATED:      { label: 'UNALLOCATED', cls: 'bg-muted text-muted-foreground' },
+  NOT_SENT:         { label: 'NOT SENT',    cls: 'bg-muted text-muted-foreground' },
+  FULFILLED:        { label: 'FULFILLED',   cls: 'bg-success text-primary-foreground' },
+  PARTIAL:          { label: 'PARTIAL',     cls: 'bg-warning/15 text-warning' },
+  PARTIAL_PENDING:  { label: 'PARTIAL PENDING', cls: 'bg-warning/15 text-warning' },
 };
 
-interface DistSaleLine {
-  lineItemId: string;
-  saleId: string;
-  client: string;
-  matchLabel: string;
-  category: string;
-  qty: number;
-  displayStatus: string;
+function getMatchLabel(matchId: string) {
+  const m = MOCK_MATCHES.find(x => x.id === matchId);
+  return m ? `${m.code} ${m.teams}` : matchId;
+}
+function getSubGameName(sgId: string) {
+  return MOCK_SUBGAMES.find(sg => sg.id === sgId)?.name ?? '—';
 }
 
-interface ChildRow {
-  id: string;
-  unitId: string | null;
-  status: string;
+function deriveSaleStatus(lines: SaleLineItem[]): string {
+  if (lines.every(l => l.status === 'FULFILLED')) return 'FULFILLED';
+  if (lines.some(l => l.oversellFlag || l.status === 'PENDING_APPROVAL')) return 'PARTIAL_PENDING';
+  if (lines.every(l => l.status === 'ALLOCATED')) return 'ALLOCATED';
+  if (lines.some(l => l.status === 'ALLOCATED')) return 'PARTIAL';
+  return 'UNALLOCATED';
 }
 
+function getDistRowsForLine(lineItemId: string): DistRow[] {
+  return MOCK_DIST_ROWS.filter(r => r.lineItemId === lineItemId);
+}
+
+/* ── Allocate All Modal ── */
+function AllocateAllModal({ saleId, onClose, onConfirm }: { saleId: string; onClose: () => void; onConfirm: () => void }) {
+  const sale = MOCK_SALES.find(s => s.id === saleId);
+  if (!sale) return null;
+
+  const linePreview = sale.lines.map(li => {
+    const available = getInventoryAvailable(li.subGameId, li.categoryId);
+    const isPending = li.oversellFlag || li.status === 'PENDING_APPROVAL';
+    const isReady = !isPending && li.status !== 'ALLOCATED' && li.status !== 'FULFILLED';
+    const vendor = MOCK_UNITS.find(u => u.subGameId === li.subGameId && u.categoryId === li.categoryId)?.vendor ?? '—';
+    return { ...li, available, isPending, isReady, vendor };
+  });
+  const readyCount = linePreview.filter(l => l.isReady).length;
+  const pendingCount = linePreview.filter(l => l.isPending).length;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-foreground/40" onClick={onClose} />
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+        className="relative bg-card rounded-2xl shadow-xl max-w-lg w-full mx-4 p-6 z-10">
+        <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded hover:bg-muted"><X size={18} /></button>
+        <h2 className="font-display text-xl text-primary mb-4">Allocate All — {saleId.toUpperCase()}</h2>
+
+        <div className="space-y-2 mb-4">
+          {linePreview.map((lp, i) => (
+            <div key={lp.id} className={`rounded-lg p-3 border ${lp.isPending ? 'border-warning bg-warning/5' : lp.isReady ? 'border-success bg-success/5' : 'border-border bg-muted/50'}`}>
+              <div className="flex items-center justify-between">
+                <span className="font-body text-sm text-foreground">
+                  Line {i + 1}: {lp.categoryLabel} × {lp.qty}
+                </span>
+                {lp.isPending ? (
+                  <span className="font-body text-xs text-warning font-medium">PENDING APPROVAL — skip</span>
+                ) : lp.isReady ? (
+                  <span className="font-body text-xs text-success font-medium">→ {lp.vendor} ({lp.available} available) ✓ Ready</span>
+                ) : (
+                  <span className="font-body text-xs text-muted-foreground">Already {lp.status.toLowerCase()}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {pendingCount > 0 && (
+          <p className="font-body text-xs text-warning mb-4">
+            Will allocate {readyCount} of {sale.lines.length} lines. {pendingCount} line{pendingCount > 1 ? 's' : ''} requires manager approval first.
+          </p>
+        )}
+
+        <button onClick={onConfirm}
+          className="w-full h-10 rounded-lg font-body text-sm font-bold bg-primary text-primary-foreground hover:opacity-90">
+          Allocate {readyCount} Ready Line{readyCount !== 1 ? 's' : ''}
+        </button>
+        <div className="text-center mt-2">
+          <button onClick={onClose} className="font-body text-sm hover:underline text-muted-foreground">Cancel</button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ── Main Page ── */
 export default function DistributionPage() {
-  const [tab, setTab] = useState<Tab>('unallocated');
+  const [tab, setTab] = useState<Tab>('all');
   const [catFilter, setCatFilter] = useState('all');
-  const [expandedLine, setExpandedLine] = useState<string | null>('sli-1-3');
-  const [allocatorLineId, setAllocatorLineId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [expandedLines, setExpandedLines] = useState<Record<string, boolean>>({});
+  const [allocatorCtx, setAllocatorCtx] = useState<{ saleId: string; lineItem: SaleLineItem; lineIdx: number } | null>(null);
   const [blockSelected, setBlockSelected] = useState(false);
   const [allocating, setAllocating] = useState(false);
   const [allocated, setAllocated] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [manualSelected, setManualSelected] = useState<Set<string>>(new Set());
-  const [allocatedLines, setAllocatedLines] = useState<Set<string>>(new Set());
+  const [allocatedLineIds, setAllocatedLineIds] = useState<Set<string>>(new Set());
+  const [allocateAllSale, setAllocateAllSale] = useState<string | null>(null);
 
-  // Build flat line-level rows
-  const lines: DistSaleLine[] = useMemo(() =>
-    MOCK_SALE_LINE_ITEMS.map(li => {
-      const sale = MOCK_SALES.find(s => s.id === li.saleId);
-      const m = MOCK_MATCHES.find(m => m.id === sale?.matchId);
-      const isNowAllocated = allocatedLines.has(li.id);
-      return {
-        lineItemId: li.id,
-        saleId: li.saleId,
-        client: sale?.client ?? '',
-        matchLabel: m ? `${m.code} ${m.teams}` : sale?.matchId ?? '',
-        category: li.categoryLabel,
-        qty: li.qty,
-        displayStatus: isNowAllocated ? 'ALLOCATED' : (li.status === 'PENDING_APPROVAL' ? 'UNALLOCATED' : li.status),
-      };
-    }), [allocatedLines]);
+  const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleLine = (id: string) => setExpandedLines(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const counts = useMemo(() => ({
-    unallocated: lines.filter(l => l.displayStatus === 'UNALLOCATED').length,
-    allocated: lines.filter(l => l.displayStatus === 'ALLOCATED').length,
-    fulfilled: lines.filter(l => l.displayStatus === 'FULFILLED').length,
-  }), [lines]);
+  // Tab counts at sale level
+  const saleCounts = useMemo(() => {
+    const c = { unallocated: 0, allocated: 0, fulfilled: 0 };
+    MOCK_SALES.forEach(s => {
+      const lines = s.lines.map(l => allocatedLineIds.has(l.id) ? { ...l, status: 'ALLOCATED' as const } : l);
+      const st = deriveSaleStatus(lines);
+      if (st === 'UNALLOCATED' || st === 'PARTIAL' || st === 'PARTIAL_PENDING') c.unallocated++;
+      else if (st === 'ALLOCATED') c.allocated++;
+      else if (st === 'FULFILLED') c.fulfilled++;
+    });
+    return c;
+  }, [allocatedLineIds]);
 
-  const filtered = lines.filter(l => {
-    if (tab === 'unallocated' && l.displayStatus !== 'UNALLOCATED') return false;
-    if (tab === 'allocated' && l.displayStatus !== 'ALLOCATED') return false;
-    if (tab === 'fulfilled' && l.displayStatus !== 'FULFILLED') return false;
-    if (catFilter !== 'all' && l.category !== catFilter) return false;
+  const filteredSales = MOCK_SALES.filter(s => {
+    const lines = s.lines.map(l => allocatedLineIds.has(l.id) ? { ...l, status: 'ALLOCATED' as const } : l);
+    const st = deriveSaleStatus(lines);
+    if (tab === 'unallocated' && st !== 'UNALLOCATED' && st !== 'PARTIAL' && st !== 'PARTIAL_PENDING') return false;
+    if (tab === 'allocated' && st !== 'ALLOCATED') return false;
+    if (tab === 'fulfilled' && st !== 'FULFILLED') return false;
+    if (catFilter !== 'all' && !s.lines.some(l => l.categoryLabel === catFilter)) return false;
     return true;
   });
 
-  const generateChildren = (lineItemId: string, qty: number, isAllocated: boolean): ChildRow[] =>
-    Array.from({ length: qty }, (_, i) => ({
-      id: `${lineItemId.toUpperCase()}-${i + 1}`,
-      unitId: isAllocated ? `P${String(87 + i).padStart(5, '0')}` : null,
-      status: isAllocated ? 'ALLOCATED' : 'UNALLOCATED',
-    }));
-
-  const activeLine = allocatorLineId ? lines.find(l => l.lineItemId === allocatorLineId) : null;
+  const closePanel = () => {
+    setAllocatorCtx(null); setBlockSelected(false); setAllocating(false);
+    setAllocated(false); setManualMode(false); setManualSelected(new Set());
+  };
 
   const handleConfirm = async () => {
+    if (!allocatorCtx) return;
     setAllocating(true);
     await new Promise(r => setTimeout(r, 1500));
     setAllocating(false);
     setAllocated(true);
-    if (allocatorLineId) setAllocatedLines(prev => new Set(prev).add(allocatorLineId));
+    setAllocatedLineIds(prev => new Set(prev).add(allocatorCtx.lineItem.id));
   };
 
-  const closePanel = () => {
-    setAllocatorLineId(null);
-    setBlockSelected(false);
-    setAllocating(false);
-    setAllocated(false);
-    setManualMode(false);
-    setManualSelected(new Set());
-  };
-
-  const toggleManual = (id: string, qty: number) => {
+  const toggleManualUnit = (id: string, max: number) => {
     setManualSelected(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else if (next.size < qty) next.add(id);
+      if (next.has(id)) next.delete(id); else if (next.size < max) next.add(id);
       return next;
     });
   };
 
   const TABS: { key: Tab; label: string; count?: number }[] = [
     { key: 'all', label: 'All Sales' },
-    { key: 'unallocated', label: 'Unallocated', count: counts.unallocated },
-    { key: 'allocated', label: 'Allocated', count: counts.allocated },
-    { key: 'fulfilled', label: 'Fulfilled', count: counts.fulfilled },
+    { key: 'unallocated', label: 'Unallocated', count: saleCounts.unallocated },
+    { key: 'allocated', label: 'Allocated', count: saleCounts.allocated },
+    { key: 'fulfilled', label: 'Fulfilled', count: saleCounts.fulfilled },
   ];
 
-  const selectClass = "h-[38px] px-3 rounded-lg font-body text-sm bg-bg-card border border-border outline-none focus:ring-1 focus:ring-gold";
+  const selectClass = "h-[38px] px-3 rounded-lg font-body text-sm bg-card border border-border outline-none focus:ring-1 focus:ring-accent";
 
   return (
     <div>
-      <h1 className="font-display text-[26px] mb-4" style={{ color: '#0B2D5E' }}>Distribution &amp; Allocation</h1>
+      <h1 className="font-display text-[26px] mb-4 text-primary">Distribution &amp; Allocation</h1>
 
-      <div className="flex gap-6 border-b mb-4" style={{ borderColor: '#E5E7EB' }}>
+      <div className="flex gap-6 border-b border-border mb-4">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className="pb-2.5 font-body text-sm font-medium transition-colors relative"
-            style={{ color: tab === t.key ? '#0B2D5E' : '#6B7280' }}>
+            className={`pb-2.5 font-body text-sm font-medium transition-colors relative ${tab === t.key ? 'text-primary' : 'text-muted-foreground'}`}>
             {t.label}{t.count !== undefined && ` (${t.count})`}
-            {tab === t.key && <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: '#0B2D5E' }} />}
+            {tab === t.key && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
           </button>
         ))}
       </div>
 
       <div className="flex gap-3 mb-4">
-        <select className={selectClass} disabled><option>M01 — MEX v RSA</option></select>
+        <select className={selectClass} disabled><option>All Matches</option></select>
         <select className={selectClass} value={catFilter} onChange={e => setCatFilter(e.target.value)}>
           <option value="all">All Categories</option>
           <option>Top Cat 1</option><option>Cat 2</option><option>Cat 3</option>
+          <option>Grandstand A</option><option>Paddock Club</option>
         </select>
       </div>
 
-      <div className="bg-bg-card rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-[850px]">
+          <table className="w-full text-left min-w-[1000px]">
             <thead>
-              <tr style={{ backgroundColor: '#0B2D5E', height: 44 }}>
-                {['', 'Line ID', 'Client', 'Category', 'Qty', 'Allocated', 'Status', 'Actions'].map(h => (
-                  <th key={h} className="px-4 py-2.5 font-body text-[13px] font-bold" style={{ color: 'white' }}>{h}</th>
+              <tr className="bg-primary h-[44px]">
+                {['', 'Sale ID', 'Client', 'Match', 'Total Tickets', 'Status', 'Actions'].map(h => (
+                  <th key={h} className="px-4 py-2.5 font-body text-[13px] font-bold text-primary-foreground">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((l, i) => {
-                const isExpanded = expandedLine === l.lineItemId;
-                const st = STATUS_MAP[l.displayStatus] || STATUS_MAP['UNALLOCATED'];
-                const isAllocNow = allocatedLines.has(l.lineItemId);
-                const allocCount = isAllocNow ? l.qty : (l.displayStatus === 'ALLOCATED' ? l.qty : 0);
-                const children = generateChildren(l.lineItemId, l.qty, isAllocNow || l.displayStatus === 'ALLOCATED');
+              {filteredSales.map((s, si) => {
+                const effectiveLines = s.lines.map(l => allocatedLineIds.has(l.id)
+                  ? { ...l, status: 'ALLOCATED' as const, oversellFlag: false } : l);
+                const isExpanded = expanded[s.id];
+                const saleLabel = s.id.toUpperCase().replace('SALE', 'SALE-');
+                const overallStatus = deriveSaleStatus(effectiveLines);
+                const st = STATUS_CLS[overallStatus] || STATUS_CLS['UNALLOCATED'];
+                const totalQty = effectiveLines.reduce((sum, l) => sum + l.qty, 0);
+                const isMultiSg = hasMultipleSubGames(s.matchId);
 
                 return (
-                  <React.Fragment key={l.lineItemId}>
-                    <tr className="transition-colors"
-                      style={{ backgroundColor: i % 2 === 1 ? '#F8F9FC' : 'white' }}
+                  <Fragment key={s.id}>
+                    {/* Sale parent row */}
+                    <tr
+                      className="transition-colors cursor-pointer border-b border-border"
+                      style={{ backgroundColor: si % 2 === 1 ? 'hsl(var(--muted))' : 'hsl(var(--card))' }}
                       onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#EEF3FF')}
-                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = i % 2 === 1 ? '#F8F9FC' : 'white')}>
-                      <td className="px-4 py-3 w-10">
-                        <button onClick={() => setExpandedLine(isExpanded ? null : l.lineItemId)}>
-                          <ChevronRight size={16} className="transition-transform"
-                            style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', color: '#6B7280' }} />
-                        </button>
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = si % 2 === 1 ? 'hsl(220 14% 96%)' : 'white')}
+                      onClick={() => toggleExpand(s.id)}
+                    >
+                      <td className="px-4 py-3 w-8">
+                        <ChevronRight size={16} className={`text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs font-bold" style={{ color: '#0B2D5E' }}>{l.lineItemId.toUpperCase()}</td>
-                      <td className="px-4 py-3 font-body text-[13px] font-medium" style={{ color: '#1A1A2E' }}>{l.client}</td>
-                      <td className="px-4 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>{l.category}</td>
-                      <td className="px-4 py-3 font-mono text-[13px]" style={{ color: '#1A1A2E' }}>{l.qty}</td>
-                      <td className="px-4 py-3 font-mono text-[13px]" style={{ color: '#1A1A2E' }}>{allocCount}/{l.qty}</td>
+                      <td className="px-4 py-3 font-mono text-xs font-bold text-primary">{saleLabel}</td>
+                      <td className="px-4 py-3 font-body text-[13px] font-medium text-foreground">{s.client}</td>
+                      <td className="px-4 py-3 font-body text-[13px] text-foreground">{getMatchLabel(s.matchId)}</td>
+                      <td className="px-4 py-3 font-mono text-[13px] text-foreground">{totalQty} tickets</td>
                       <td className="px-4 py-3">
-                        <span className="px-2.5 py-1 rounded-full font-body text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-body text-[11px] font-medium ${st.cls}`}>
+                          {overallStatus.includes('PENDING') && <AlertTriangle size={11} />}
+                          {st.label}
+                        </span>
                       </td>
-                      <td className="px-4 py-3">
-                        {l.displayStatus === 'UNALLOCATED' && (
-                          <button onClick={() => { setAllocatorLineId(l.lineItemId); setBlockSelected(false); setAllocated(false); setManualMode(false); setManualSelected(new Set()); }}
-                            className="px-3 py-1.5 rounded-lg font-body text-xs font-bold transition-opacity hover:opacity-90"
-                            style={{ backgroundColor: '#C9A84C', color: '#0B2D5E' }}>
-                            Allocate Now
+                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                        <div className="flex gap-2">
+                          <button onClick={() => setAllocateAllSale(s.id)}
+                            className="px-3 py-1.5 rounded-lg font-body text-xs font-medium bg-accent text-accent-foreground hover:opacity-90">
+                            Allocate All
                           </button>
-                        )}
+                          <button className="font-body text-xs text-primary hover:underline">Upgrade</button>
+                          <button className="font-body text-xs text-destructive hover:underline">Cancel</button>
+                        </div>
                       </td>
                     </tr>
-                    {isExpanded && children.map(c => {
-                      const cSt = STATUS_MAP[c.status] || STATUS_MAP['UNALLOCATED'];
+
+                    {/* Expanded: line groups + child rows */}
+                    {isExpanded && effectiveLines.map((li, liIdx) => {
+                      const lineSt = STATUS_CLS[li.status] || STATUS_CLS['UNALLOCATED'];
+                      const sgName = getSubGameName(li.subGameId);
+                      const isPending = li.oversellFlag || li.status === 'PENDING_APPROVAL';
+                      const isLineExpanded = expandedLines[li.id];
+                      const distRows = getDistRowsForLine(li.id);
+
                       return (
-                        <tr key={c.id} style={{ backgroundColor: '#FAFBFD' }}>
-                          <td className="px-4 py-2" />
-                          <td className="px-4 py-2 font-mono text-[11px]" style={{ color: '#6B7280', borderLeft: '2px solid #E5E7EB', paddingLeft: 20 }}>{c.id}</td>
-                          <td className="px-4 py-2 font-body text-xs" style={{ color: '#6B7280' }}>{l.client}</td>
-                          <td className="px-4 py-2 font-body text-xs" style={{ color: '#6B7280' }}>{l.category}</td>
-                          <td className="px-4 py-2 font-mono text-xs" style={{ color: '#6B7280' }}>1</td>
-                          <td className="px-4 py-2 font-mono text-xs" style={{ color: '#6B7280' }}>{c.unitId || '—'}</td>
-                          <td className="px-4 py-2">
-                            <span className="px-2 py-0.5 rounded-full font-body text-[10px] font-medium" style={{ backgroundColor: cSt.bg, color: cSt.text }}>{cSt.label}</span>
-                          </td>
-                          <td />
-                        </tr>
+                        <Fragment key={li.id}>
+                          {/* Line group header */}
+                          <tr
+                            className="bg-muted/70 border-b border-border cursor-pointer"
+                            onClick={() => toggleLine(li.id)}
+                          >
+                            <td className="px-4 py-2.5">
+                              <ChevronRight size={13} className={`text-muted-foreground transition-transform duration-200 ${isLineExpanded ? 'rotate-90' : ''}`} />
+                            </td>
+                            <td colSpan={4} className="px-4 py-2.5">
+                              <div className="flex items-center gap-3">
+                                <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-primary/10 text-primary">L{liIdx + 1}</span>
+                                <span className="font-body text-[13px] text-foreground">
+                                  {sgName} · {li.categoryLabel} · {li.qty} tickets
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-body text-[10px] font-medium ${lineSt.cls}`}>
+                                {isPending && <AlertTriangle size={10} />}
+                                {lineSt.label}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
+                              <div className="flex gap-2">
+                                {isPending ? (
+                                  <button className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
+                                ) : li.status !== 'ALLOCATED' && li.status !== 'FULFILLED' ? (
+                                  <button
+                                    onClick={() => { setAllocatorCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx }); setBlockSelected(false); setAllocated(false); setManualMode(false); setManualSelected(new Set()); }}
+                                    className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-accent text-accent-foreground hover:opacity-90">
+                                    Allocate
+                                  </button>
+                                ) : null}
+                                <button className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Upgrade</button>
+                              </div>
+                            </td>
+                          </tr>
+
+                          {/* Child distribution rows */}
+                          {isLineExpanded && distRows.map(dr => {
+                            const drSt = STATUS_CLS[dr.status] || STATUS_CLS['UNALLOCATED'];
+                            const dispSt = STATUS_CLS[dr.dispatchStatus] || STATUS_CLS['NOT_SENT'];
+                            return (
+                              <tr key={dr.id} className={`border-b border-border/30 ${isPending ? 'bg-warning/5' : 'bg-muted/30'}`}>
+                                <td />
+                                <td className="px-4 py-2 font-mono text-[11px] text-muted-foreground" style={{ paddingLeft: 28, borderLeft: '2px solid hsl(var(--border))' }}>
+                                  {dr.id}
+                                </td>
+                                <td className="px-4 py-2 font-body text-[11px] text-muted-foreground">{sgName}</td>
+                                <td className="px-4 py-2">
+                                  <span className={`px-1.5 py-0.5 rounded-full font-body text-[9px] font-medium ${drSt.cls}`}>{drSt.label}</span>
+                                </td>
+                                <td className="px-4 py-2 font-mono text-[11px] text-foreground">{dr.unitId || '—'}</td>
+                                <td className="px-4 py-2">
+                                  <span className={`px-1.5 py-0.5 rounded-full font-body text-[9px] font-medium ${dispSt.cls}`}>{dispSt.label}</span>
+                                </td>
+                                <td className="px-4 py-2">
+                                  <div className="font-body text-[11px] text-muted-foreground">
+                                    {dr.clientFirstName ? `${dr.clientFirstName} ${dr.clientLastName}` : '—'}
+                                    {dr.clientEmail && <span className="ml-2 text-[10px]">{dr.clientEmail}</span>}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+
+                          {/* If no dist rows, generate placeholder */}
+                          {isLineExpanded && distRows.length === 0 && Array.from({ length: li.qty }, (_, i) => (
+                            <tr key={`${li.id}-ph-${i}`} className="border-b border-border/30 bg-muted/30">
+                              <td />
+                              <td className="px-4 py-2 font-mono text-[11px] text-muted-foreground" style={{ paddingLeft: 28, borderLeft: '2px solid hsl(var(--border))' }}>
+                                {li.id.toUpperCase()}-{i + 1}
+                              </td>
+                              <td className="px-4 py-2 font-body text-[11px] text-muted-foreground">{sgName}</td>
+                              <td className="px-4 py-2"><span className="px-1.5 py-0.5 rounded-full font-body text-[9px] font-medium bg-muted text-muted-foreground">UNALLOCATED</span></td>
+                              <td className="px-4 py-2 font-mono text-[11px] text-muted-foreground">—</td>
+                              <td className="px-4 py-2"><span className="px-1.5 py-0.5 rounded-full font-body text-[9px] font-medium bg-muted text-muted-foreground">NOT SENT</span></td>
+                              <td className="px-4 py-2 font-body text-[11px] text-muted-foreground">—</td>
+                            </tr>
+                          ))}
+                        </Fragment>
                       );
                     })}
-                  </React.Fragment>
+                  </Fragment>
                 );
               })}
             </tbody>
@@ -210,146 +352,203 @@ export default function DistributionPage() {
         </div>
       </div>
 
+      {/* Allocate All Modal */}
+      <AnimatePresence>
+        {allocateAllSale && (
+          <AllocateAllModal
+            saleId={allocateAllSale}
+            onClose={() => setAllocateAllSale(null)}
+            onConfirm={() => {
+              const sale = MOCK_SALES.find(s => s.id === allocateAllSale);
+              if (sale) {
+                const readyIds = sale.lines
+                  .filter(l => !l.oversellFlag && l.status !== 'PENDING_APPROVAL' && l.status !== 'ALLOCATED' && l.status !== 'FULFILLED')
+                  .map(l => l.id);
+                setAllocatedLineIds(prev => { const next = new Set(prev); readyIds.forEach(id => next.add(id)); return next; });
+              }
+              setAllocateAllSale(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Allocator Panel */}
       <AnimatePresence>
-        {allocatorLineId && activeLine && (
-          <div className="fixed inset-0 z-50 flex justify-end">
-            <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={closePanel} />
-            <motion.div initial={{ x: 420 }} animate={{ x: 0 }} exit={{ x: 420 }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="relative w-[420px] max-w-full h-full bg-bg-card shadow-2xl flex flex-col"
-              style={{ borderLeft: '1px solid #E5E7EB' }}>
-              <div className="px-6 py-5 border-b flex items-start justify-between" style={{ borderColor: '#E5E7EB' }}>
-                <div className="flex items-center gap-3">
-                  <h2 className="font-display text-xl" style={{ color: '#0B2D5E' }}>Allocator</h2>
-                  <span className="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold" style={{ backgroundColor: '#0B2D5E', color: 'white' }}>
-                    {activeLine.lineItemId.toUpperCase()}
-                  </span>
+        {allocatorCtx && (() => {
+          const { saleId, lineItem, lineIdx } = allocatorCtx;
+          const sale = MOCK_SALES.find(s => s.id === saleId);
+          const sgName = getSubGameName(lineItem.subGameId);
+          const availableUnits = MOCK_UNITS.filter(u => u.subGameId === lineItem.subGameId && u.categoryId === lineItem.categoryId && u.status === 'AVAILABLE');
+          const vendorBlocks = Object.entries(
+            availableUnits.reduce<Record<string, typeof availableUnits>>((acc, u) => {
+              const key = `${u.vendor}::${u.setId}`;
+              (acc[key] = acc[key] || []).push(u);
+              return acc;
+            }, {})
+          );
+
+          return (
+            <div className="fixed inset-0 z-50 flex justify-end">
+              <div className="absolute inset-0 bg-foreground/30" onClick={closePanel} />
+              <motion.div initial={{ x: 420, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 420, opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="relative w-[440px] max-w-full h-full bg-card shadow-2xl flex flex-col z-10 border-l border-border">
+
+                <div className="px-6 py-5 border-b border-border flex items-start justify-between">
+                  <div>
+                    <h2 className="font-display text-lg text-primary">Allocator — {saleId.toUpperCase()} / Line {lineIdx + 1} / {lineItem.categoryLabel}</h2>
+                  </div>
+                  <button onClick={closePanel} className="p-1 rounded hover:bg-muted"><X size={18} /></button>
                 </div>
-                <button onClick={closePanel} className="p-1 rounded hover:bg-muted"><X size={18} /></button>
-              </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-5">
-                {!allocated ? (
-                  <>
-                    <div className="rounded-lg p-3 space-y-1.5" style={{ backgroundColor: '#F8F9FC' }}>
-                      <p className="font-body text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: '#6B7280' }}>Selected Sale Line</p>
-                      {[
-                        ['LineID', activeLine.lineItemId.toUpperCase(), true],
-                        ['Client', activeLine.client, false],
-                        ['Match', activeLine.matchLabel, false],
-                        ['Category', activeLine.category, false],
-                        ['Qty Required', `${activeLine.qty} tickets`, false],
-                      ].map(([label, val, mono]) => (
-                        <div key={label as string} className="flex justify-between">
-                          <span className="font-body text-[13px]" style={{ color: '#6B7280' }}>{label as string}</span>
-                          <span className={`text-[13px] font-medium ${mono ? 'font-mono' : 'font-body'}`} style={{ color: '#1A1A2E' }}>{val as string}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <p className="font-body text-sm font-bold" style={{ color: '#0B2D5E' }}>Available Vendor Blocks</p>
-                        <span className="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold" style={{ backgroundColor: '#D1FAE5', color: '#065F46' }}>1</span>
+                <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                  {!allocated ? (
+                    <>
+                      {/* Section A: Selected Line */}
+                      <div className="rounded-lg p-4 bg-muted/50 space-y-1.5">
+                        <p className="font-body text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Selected Sale Line</p>
+                        {[
+                          ['Sale', saleId.toUpperCase()],
+                          ['Client', sale?.client ?? '—'],
+                          ['Line', String(lineIdx + 1)],
+                          ['Sub-Game', `${sgName} (${lineItem.subGameId})`],
+                          ['Category', lineItem.categoryLabel],
+                          ['Qty Required', `${lineItem.qty} tickets`],
+                        ].map(([label, val]) => (
+                          <div key={label} className="flex justify-between">
+                            <span className="font-body text-[13px] text-muted-foreground">{label}</span>
+                            <span className="font-body text-[13px] font-medium text-foreground">{val}</span>
+                          </div>
+                        ))}
                       </div>
 
-                      <div className="rounded-xl p-4 transition-all" style={{ border: `1.5px solid ${blockSelected ? '#C9A84C' : '#E5E7EB'}` }}>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-body text-sm font-bold" style={{ color: '#1A1A2E' }}>poxami</span>
-                          <div className="flex gap-1.5">
-                            <span className="px-2 py-0.5 rounded-full font-body text-[10px] font-medium" style={{ backgroundColor: '#D1FAE5', color: '#065F46' }}>Match ✓</span>
-                            <span className="px-2 py-0.5 rounded-full font-body text-[10px] font-medium" style={{ backgroundColor: '#D1FAE5', color: '#065F46' }}>Cat ✓</span>
-                          </div>
-                        </div>
-                        <div className="space-y-0.5 mb-3">
-                          <p className="font-mono text-xs" style={{ color: '#6B7280' }}>SetID: PR001-L3-S01 | SetSize: 60</p>
-                          <p className="font-body text-xs" style={{ color: '#1A7A4A' }}>Available: 40 units</p>
+                      {/* Section B: Vendor Blocks */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <p className="font-body text-sm font-bold text-primary">Available Vendor Blocks</p>
+                          <span className="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-success/15 text-success">{vendorBlocks.length}</span>
                         </div>
 
-                        {!blockSelected ? (
-                          <button onClick={() => setBlockSelected(true)}
-                            className="w-full h-10 rounded-lg font-body text-sm font-bold transition-opacity hover:opacity-90"
-                            style={{ backgroundColor: '#0B2D5E', color: 'white' }}>SELECT THIS BLOCK</button>
-                        ) : (
-                          <button className="w-full h-10 rounded-lg font-body text-sm font-bold flex items-center justify-center gap-2" style={{ backgroundColor: '#D97706', color: 'white' }}>
-                            <Check size={14} /> Block Selected ✓
+                        {vendorBlocks.length === 0 ? (
+                          <div className="rounded-lg p-4 border border-border bg-muted">
+                            <p className="font-body text-sm text-muted-foreground">No exact match. No units available for this sub-game + category combination.</p>
+                            <p className="font-body text-xs text-muted-foreground mt-1">Cross-sub-game allocation is not allowed — different session = different ticket.</p>
+                          </div>
+                        ) : vendorBlocks.map(([key, units]) => {
+                          const first = units[0];
+                          return (
+                            <div key={key} className="rounded-xl p-4 mb-3 transition-all" style={{ border: `1.5px solid ${blockSelected ? 'hsl(var(--accent))' : 'hsl(var(--border))'}` }}>
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-body text-sm font-bold text-foreground">{first.vendor}</span>
+                                <div className="flex gap-1.5">
+                                  <span className="px-2 py-0.5 rounded-full font-body text-[10px] font-medium bg-success/15 text-success">Sub-Game Match ✓</span>
+                                  <span className="px-2 py-0.5 rounded-full font-body text-[10px] font-medium bg-success/15 text-success">Category Match ✓</span>
+                                </div>
+                              </div>
+                              <div className="space-y-0.5 mb-3">
+                                <p className="font-mono text-xs text-muted-foreground">SetID: {first.setId} | Sub-Game: {sgName}</p>
+                                <p className="font-body text-xs text-success">Available: {units.length} units</p>
+                              </div>
+
+                              {!blockSelected ? (
+                                <button onClick={() => setBlockSelected(true)}
+                                  className="w-full h-10 rounded-lg font-body text-sm font-bold bg-primary text-primary-foreground hover:opacity-90">
+                                  SELECT THIS BLOCK
+                                </button>
+                              ) : (
+                                <button className="w-full h-10 rounded-lg font-body text-sm font-bold flex items-center justify-center gap-2 bg-warning text-primary-foreground">
+                                  <Check size={14} /> Block Selected ✓
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        {/* Section C: Allocation Preview */}
+                        {blockSelected && vendorBlocks.length > 0 && (() => {
+                          const allUnits = vendorBlocks[0][1];
+                          const startUnit = allUnits[0];
+                          const endUnit = allUnits[Math.min(lineItem.qty - 1, allUnits.length - 1)];
+                          return (
+                            <div className="mt-4 space-y-3">
+                              <p className="font-body text-sm font-bold text-primary">Allocation Preview</p>
+                              <div className="rounded-lg p-3 bg-muted/50 space-y-1">
+                                <p className="font-body text-[13px] text-foreground">
+                                  Allocating <strong>{lineItem.qty}</strong> units: <span className="font-mono">{startUnit.id} – {endUnit.id}</span>
+                                </p>
+                                <p className="font-body text-xs text-muted-foreground">Sub-Game: {sgName} | Category: {lineItem.categoryLabel} | Vendor: {startUnit.vendor}</p>
+                                <p className="font-mono text-xs text-muted-foreground">AllocNote: FIFA26-{MOCK_MATCHES.find(m => m.id === startUnit.matchId)?.code ?? 'XX'}-SG{lineIdx + 1}-L{lineIdx + 1}-ALLOC-0417-001</p>
+                              </div>
+                              <button onClick={handleConfirm} disabled={allocating}
+                                className="w-full h-10 rounded-lg font-body text-sm font-bold flex items-center justify-center gap-2 bg-accent text-accent-foreground hover:opacity-90 disabled:opacity-70">
+                                {allocating ? <><Loader2 size={14} className="animate-spin" /> Allocating...</> : 'CONFIRM ALLOCATION'}
+                              </button>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Manual selection */}
+                        {!manualMode && !blockSelected && vendorBlocks.length > 0 && (
+                          <button onClick={() => setManualMode(true)} className="mt-4 font-body text-xs hover:underline text-accent">
+                            Or manually select individual units →
                           </button>
                         )}
+
+                        {manualMode && vendorBlocks.length > 0 && (
+                          <div className="mt-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="font-body text-xs font-bold text-primary">Manual Unit Selection</p>
+                              <span className="font-mono text-xs text-muted-foreground">{manualSelected.size} of {lineItem.qty} selected</span>
+                            </div>
+                            <div className="grid grid-cols-6 gap-1.5 max-h-48 overflow-y-auto">
+                              {vendorBlocks[0][1].map(u => {
+                                const sel = manualSelected.has(u.id);
+                                return (
+                                  <button key={u.id} onClick={() => toggleManualUnit(u.id, lineItem.qty)}
+                                    className="rounded-md p-1 text-center transition-all"
+                                    style={{
+                                      border: `1.5px solid ${sel ? 'hsl(var(--success))' : 'hsl(var(--warning))'}`,
+                                      backgroundColor: sel ? 'hsl(var(--success-bg))' : 'hsl(var(--warning-bg))',
+                                      color: sel ? '#065F46' : '#92400E',
+                                    }}>
+                                    <span className="font-mono text-[9px] font-bold block">{u.id}</span>
+                                    {sel && <Check size={10} className="mx-auto" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <button disabled={manualSelected.size !== lineItem.qty} onClick={handleConfirm}
+                              className="w-full mt-3 h-9 rounded-lg font-body text-xs font-bold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40">
+                              Apply Manual Selection
+                            </button>
+                          </div>
+                        )}
                       </div>
-
-                      {blockSelected && (
-                        <div className="mt-4 space-y-3">
-                          <p className="font-body text-sm font-bold" style={{ color: '#0B2D5E' }}>Allocation Preview</p>
-                          <div className="rounded-lg p-3 space-y-1" style={{ backgroundColor: '#F8F9FC' }}>
-                            <p className="font-body text-[13px]" style={{ color: '#1A1A2E' }}>
-                              Allocating <strong>{activeLine.qty}</strong> consecutive units: <span className="font-mono">P00087 – P{String(86 + activeLine.qty).padStart(5, '0')}</span>
-                            </p>
-                            <p className="font-body text-xs" style={{ color: '#6B7280' }}>Starting SetPos: 1 | Ending SetPos: {activeLine.qty}</p>
-                            <p className="font-mono text-xs" style={{ color: '#6B7280' }}>AllocNote: FIFA26-ALLOC-0417-00001</p>
-                          </div>
-                          <button onClick={handleConfirm} disabled={allocating}
-                            className="w-full h-10 rounded-lg font-body text-sm font-bold flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-70"
-                            style={{ backgroundColor: '#C9A84C', color: '#0B2D5E' }}>
-                            {allocating ? <><Loader2 size={14} className="animate-spin" /> Allocating...</> : 'CONFIRM ALLOCATION'}
-                          </button>
-                        </div>
-                      )}
-
-                      {!manualMode ? (
-                        <button onClick={() => setManualMode(true)} className="mt-4 font-body text-xs hover:underline" style={{ color: '#C9A84C' }}>
-                          Or manually select individual units →
-                        </button>
-                      ) : (
-                        <div className="mt-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="font-body text-xs font-bold" style={{ color: '#0B2D5E' }}>Manual Unit Selection</p>
-                            <span className="font-mono text-xs" style={{ color: '#6B7280' }}>{manualSelected.size} of {activeLine.qty} selected</span>
-                          </div>
-                          <div className="grid grid-cols-6 gap-1.5 max-h-48 overflow-y-auto">
-                            {Array.from({ length: 40 }, (_, i) => {
-                              const uid = `P${String(144 + i).padStart(5, '0')}`;
-                              const selected = manualSelected.has(uid);
-                              return (
-                                <button key={uid} onClick={() => toggleManual(uid, activeLine.qty)}
-                                  className="rounded-md p-1 text-center transition-all"
-                                  style={{ border: `1.5px solid ${selected ? '#1A7A4A' : '#D97706'}`, backgroundColor: selected ? '#D1FAE5' : '#FEF3C7', color: selected ? '#065F46' : '#92400E' }}>
-                                  <span className="font-mono text-[9px] font-bold block">{uid}</span>
-                                  {selected && <Check size={10} className="mx-auto" />}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <button disabled={manualSelected.size !== activeLine.qty}
-                            className="w-full mt-3 h-9 rounded-lg font-body text-xs font-bold transition-opacity hover:opacity-90 disabled:opacity-40"
-                            style={{ backgroundColor: '#0B2D5E', color: 'white' }}>Apply Manual Selection</button>
-                        </div>
-                      )}
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center text-center py-8 space-y-4">
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center bg-success/15">
+                        <CheckCircle size={40} className="text-success" />
+                      </div>
+                      <h3 className="font-display text-[22px] text-success">Allocation Complete!</h3>
+                      <p className="font-body text-sm text-foreground">
+                        <strong>{lineItem.qty}</strong> units allocated to <strong>{sale?.client}</strong>
+                      </p>
+                      <div className="rounded-lg p-3 w-full bg-muted/50 space-y-1">
+                        <p className="font-body text-xs text-muted-foreground">Sub-Game: {sgName}</p>
+                        <p className="font-mono text-xs text-muted-foreground">AllocNote: FIFA26-{MOCK_MATCHES.find(m => m.id === sale?.matchId)?.code ?? 'XX'}-L{lineIdx + 1}-ALLOC-0417-001</p>
+                      </div>
+                      <button className="w-full h-10 rounded-lg font-body text-sm font-bold bg-primary text-primary-foreground hover:opacity-90">
+                        Generate Client Portal →
+                      </button>
+                      <button onClick={closePanel} className="font-body text-sm hover:underline text-muted-foreground">Close</button>
                     </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center text-center py-8 space-y-4">
-                    <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#D1FAE5' }}>
-                      <CheckCircle size={40} style={{ color: '#1A7A4A' }} />
-                    </div>
-                    <h3 className="font-display text-[22px]" style={{ color: '#1A7A4A' }}>Allocation Complete!</h3>
-                    <p className="font-body text-sm" style={{ color: '#1A1A2E' }}>
-                      <strong>{activeLine.qty}</strong> units allocated to <strong>{activeLine.client}</strong>
-                    </p>
-                    <div className="rounded-lg p-3 w-full space-y-1" style={{ backgroundColor: '#F8F9FC' }}>
-                      <p className="font-mono text-xs" style={{ color: '#6B7280' }}>Units: P00087 – P{String(86 + activeLine.qty).padStart(5, '0')}</p>
-                      <p className="font-mono text-xs" style={{ color: '#6B7280' }}>AllocNote: FIFA26-ALLOC-0417-00001</p>
-                    </div>
-                    <button className="w-full h-10 rounded-lg font-body text-sm font-bold transition-opacity hover:opacity-90" style={{ backgroundColor: '#0B2D5E', color: 'white' }}>
-                      Generate Client Portal →
-                    </button>
-                    <button onClick={closePanel} className="font-body text-sm hover:underline" style={{ color: '#6B7280' }}>Close</button>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );
