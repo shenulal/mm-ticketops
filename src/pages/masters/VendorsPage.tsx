@@ -209,7 +209,9 @@ function EventAssignmentCard({ bridge, vendorId }: { bridge: VendorEventBridge; 
 
   const statusColors: Record<string, string> = {
     SELLING: 'bg-success/15 text-success', PLANNING: 'bg-muted text-muted-foreground',
-    COMPLETED: 'bg-primary/10 text-primary', ARCHIVED: 'bg-muted text-muted-foreground',
+    BUYING: 'bg-indigo-100 text-indigo-700', CLOSED: 'bg-primary/10 text-primary',
+    ARCHIVED: 'bg-muted text-muted-foreground', DRAFT: 'bg-muted text-muted-foreground',
+    ALLOCATING: 'bg-amber-100 text-amber-700', DISPATCHING: 'bg-emerald-100 text-emerald-700',
   };
 
   return (
