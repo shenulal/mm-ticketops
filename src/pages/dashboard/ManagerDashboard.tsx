@@ -37,6 +37,7 @@ function KPI({ label, value, sub, borderColor, icon: Icon, iconColor, pulse }: {
 
 export default function ManagerDashboard() {
   const navigate = useNavigate();
+  const [oversellCtx, setOversellCtx] = useState<{ saleId: string; line: SaleLineItem; lineIdx: number } | null>(null);
   const [filters, setFilters] = useState<DashboardFilters>({
     eventId: 'evt1', matchId: 'm01', subGameId: 'sg-m01-main',
     dateRange: 'alltime', viewMode: 'overview', currency: 'AED',
