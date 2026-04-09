@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { useAppContext } from '@/context/AppContext';
+import { useEvent } from '@/context/EventContext';
 import { TrendingUp, ShoppingCart, BarChart3, Send, ChevronRight, ChevronDown } from 'lucide-react';
 import {
-  MOCK_MATCHES, MOCK_SUBGAMES, MOCK_PURCHASE_LINE_ITEMS, MOCK_SALE_LINE_ITEMS,
-  MOCK_UNITS, MOCK_DIST_ROWS, hasMultipleSubGames, getSubGamesForMatch,
-  type SubGame, type PurchaseLineItem, type SaleLineItem,
+  MOCK_PURCHASE_LINE_ITEMS, MOCK_SALE_LINE_ITEMS,
+  MOCK_UNITS, MOCK_DIST_ROWS,
+  type PurchaseLineItem, type SaleLineItem,
 } from '@/data/mockData';
 
 type Tab = 'summary' | 'health' | 'allocation' | 'dispatch' | 'pnl';

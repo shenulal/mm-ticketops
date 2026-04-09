@@ -1,9 +1,11 @@
 import React, { useState, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RoleGuard from '@/components/RoleGuard';
+import { useAppContext } from '@/context/AppContext';
+import { useEvent } from '@/context/EventContext';
 import {
-  MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_MATCHES, MOCK_SUBGAMES, MOCK_UNITS, MOCK_DIST_ROWS,
-  getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable,
+  MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_UNITS, MOCK_DIST_ROWS,
+  getInventoryAvailable,
   type SaleLineItem,
 } from '@/data/mockData';
 import { AlertTriangle, ChevronRight, X, Lock, Plus, Trash2, Info } from 'lucide-react';
@@ -19,17 +21,6 @@ const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
   UNALLOCATED:      { label: 'UNALLOCATED',      cls: 'bg-muted text-muted-foreground' },
   CANCELLED:        { label: 'CANCELLED',        cls: 'bg-destructive/10 text-destructive' },
 };
-
-function getMatchLabel(matchId: string) {
-  const m = MOCK_MATCHES.find(x => x.id === matchId);
-  return m ? `${m.code} ${m.teams}` : matchId;
-}
-function getMatchCode(matchId: string) {
-  return MOCK_MATCHES.find(x => x.id === matchId)?.code ?? matchId;
-}
-function getSubGameName(subGameId: string) {
-  return MOCK_SUBGAMES.find(sg => sg.id === subGameId)?.name ?? '—';
-}
 
 function deriveOverallStatus(lines: SaleLineItem[]): string {
   if (lines.length === 0) return 'CANCELLED';

@@ -1,24 +1,15 @@
 import { useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useAppContext } from '@/context/AppContext';
+import { useEvent } from '@/context/EventContext';
 import RoleGuard from '@/components/RoleGuard';
 import {
-  MOCK_PURCHASES, MOCK_MATCHES, MOCK_UNITS, MOCK_PURCHASE_LINE_ITEMS,
-  MOCK_SUBGAMES, hasMultipleSubGames, getSubGamesForMatch,
-  type PurchaseLineItem, type SubGame,
+  MOCK_PURCHASES, MOCK_UNITS, MOCK_PURCHASE_LINE_ITEMS,
+  type PurchaseLineItem,
 } from '@/data/mockData';
 import { ChevronRight, X, Lock, AlertTriangle, Plus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-/* ── helpers ── */
-function getMatchLabel(matchId: string) {
-  const m = MOCK_MATCHES.find(x => x.id === matchId);
-  return m ? `${m.code} ${m.teams}` : matchId;
-}
-
-function getSubGameName(subGameId: string) {
-  return MOCK_SUBGAMES.find(sg => sg.id === subGameId)?.name ?? '—';
-}
 
 function lineUnitStats(lineItemId: string) {
   const units = MOCK_UNITS.filter(u => u.lineItemId === lineItemId);

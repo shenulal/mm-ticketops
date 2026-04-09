@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
+import { useAppContext } from '@/context/AppContext';
 import {
-  MOCK_SUBGAMES, MOCK_UNITS, MOCK_MATCHES, MOCK_SALES,
-  getHierarchyForSubGame, getInventoryAvailable, getSubGamesForMatch,
+  MOCK_UNITS, MOCK_SALES,
+  getInventoryAvailable,
   type SaleLineItem, type Category,
 } from '@/data/mockData';
 import { X, ArrowUp, ArrowDown, AlertTriangle, Info, CheckCircle, Loader2 } from 'lucide-react';
@@ -16,14 +17,6 @@ interface UpgradeModalProps {
   lineIdx: number;
   onClose: () => void;
   onConfirm: (targetCategoryId: string, qty: number) => void;
-}
-
-function getMatchLabel(matchId: string) {
-  const m = MOCK_MATCHES.find(x => x.id === matchId);
-  return m ? `${m.code} ${m.teams}` : matchId;
-}
-function getSubGameName(sgId: string) {
-  return MOCK_SUBGAMES.find(sg => sg.id === sgId)?.name ?? '—';
 }
 
 export default function UpgradeModal({ saleId, line, lineIdx, onClose, onConfirm }: UpgradeModalProps) {

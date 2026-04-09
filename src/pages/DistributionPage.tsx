@@ -1,7 +1,9 @@
 import React, { useState, useMemo, Fragment } from 'react';
+import { useAppContext } from '@/context/AppContext';
+import { useEvent } from '@/context/EventContext';
 import {
-  MOCK_SALES, MOCK_MATCHES, MOCK_DIST_ROWS, MOCK_UNITS, MOCK_SUBGAMES,
-  getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable,
+  MOCK_SALES, MOCK_DIST_ROWS, MOCK_UNITS,
+  getInventoryAvailable,
   type SaleLineItem, type DistRow,
 } from '@/data/mockData';
 import { ChevronRight, X, Check, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
@@ -20,14 +22,6 @@ const STATUS_CLS: Record<string, { label: string; cls: string }> = {
   PARTIAL:          { label: 'PARTIAL',     cls: 'bg-warning/15 text-warning' },
   PARTIAL_PENDING:  { label: 'PARTIAL PENDING', cls: 'bg-warning/15 text-warning' },
 };
-
-function getMatchLabel(matchId: string) {
-  const m = MOCK_MATCHES.find(x => x.id === matchId);
-  return m ? `${m.code} ${m.teams}` : matchId;
-}
-function getSubGameName(sgId: string) {
-  return MOCK_SUBGAMES.find(sg => sg.id === sgId)?.name ?? '—';
-}
 
 function deriveSaleStatus(lines: SaleLineItem[]): string {
   if (lines.every(l => l.status === 'FULFILLED')) return 'FULFILLED';
