@@ -379,6 +379,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [contracts, setContracts] = useState<Contract[]>(INITIAL_CONTRACTS);
   const [notificationTemplates, setNotificationTemplates] = useState<NotificationTemplate[]>(INITIAL_NOTIFICATION_TEMPLATES);
   const [events, setEvents] = useState<EventDef[]>(INITIAL_EVENTS);
+  const [vendorCredentials, setVendorCredentials] = useState<VendorCredential[]>(INITIAL_VENDOR_CREDENTIALS);
+  const [credentialHistory, setCredentialHistory] = useState<CredentialHistoryEntry[]>(INITIAL_CREDENTIAL_HISTORY);
 
   // Derived flat arrays
   const matches = useMemo(() => events.flatMap(e => e.matches), [events]);
