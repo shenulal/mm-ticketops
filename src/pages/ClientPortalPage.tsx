@@ -48,6 +48,7 @@ function buildGroups(saleId: string): LineGroup[] {
   return sale.lines.map((li, liIdx) => {
     const sgInfo = getSubGameInfo(li.subGameId);
     const isPending = li.oversellFlag || li.status === 'PENDING_APPROVAL';
+    const isCancelled = li.status === 'CANCELLED';
     const distRows = MOCK_DIST_ROWS.filter(dr => dr.lineItemId === li.id);
 
     const rows: GuestRow[] = distRows.length > 0
@@ -82,6 +83,7 @@ function buildGroups(saleId: string): LineGroup[] {
       venue: match ? `${match.venue}, ${match.city}` : '',
       showSubGame: isMultiSg,
       isPending,
+      isCancelled,
       rows,
     };
   });
