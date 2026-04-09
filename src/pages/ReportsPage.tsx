@@ -93,7 +93,7 @@ export default function ReportsPage() {
   // donut data for selected match or overall
   const donutData = useMemo(() => {
     if (!drillMatch) {
-      const d = MOCK_UNITS.filter(u => u.status === 'DISPATCHED' || u.status === 'ALLOCATED' || u.status === 'AVAILABLE');
+      // all units are either ALLOCATED or AVAILABLE
       return [
         { name: 'Dispatched', value: totalDispatched, color: '#0B2D5E' },
         { name: 'Allocated (not dispatched)', value: totalAllocated - totalDispatched, color: '#C9A84C' },
