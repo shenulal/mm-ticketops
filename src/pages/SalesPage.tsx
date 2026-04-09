@@ -641,7 +641,8 @@ export default function SalesPage() {
         {modalCtx && <ApprovalModal saleId={modalCtx.saleId} line={modalCtx.line} lineIdx={modalCtx.lineIdx}
           onApprove={() => { setApprovedLines(prev => new Set(prev).add(modalCtx.line.id)); setModalCtx(null); }}
           onReject={() => { setRejectedLines(prev => new Set(prev).add(modalCtx.line.id)); setModalCtx(null); }}
-          onUpgrade={() => setModalCtx(null)} onCancel={() => setModalCtx(null)} />}
+          onUpgrade={() => { setUpgradeCtx({ saleId: modalCtx.saleId, line: modalCtx.line, lineIdx: modalCtx.lineIdx }); setModalCtx(null); }}
+          onCancel={() => setModalCtx(null)} />}
       </AnimatePresence>
       <AnimatePresence>
         {cancelSaleId && <SaleCancelModal saleId={cancelSaleId} onClose={() => setCancelSaleId(null)}
@@ -654,6 +655,10 @@ export default function SalesPage() {
       </AnimatePresence>
       <AnimatePresence>
         {editSaleId && <SaleEditModal saleId={editSaleId} onClose={() => setEditSaleId(null)} onSave={() => {}} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {upgradeCtx && <UpgradeModal saleId={upgradeCtx.saleId} line={upgradeCtx.line} lineIdx={upgradeCtx.lineIdx}
+          onClose={() => setUpgradeCtx(null)} onConfirm={() => setUpgradeCtx(null)} />}
       </AnimatePresence>
     </div>
   );
