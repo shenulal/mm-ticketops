@@ -49,6 +49,7 @@ export default function LoginPage() {
     setLoading(false);
     if (user.role === 'staff') navigate('/staff-queue');
     else if (user.role === 'client') navigate('/client-portal/demo-token-123');
+    else if (user.role === 'supplier') navigate('/supplier');
     else navigate('/dashboard');
   };
 
