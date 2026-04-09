@@ -3,6 +3,7 @@ import { Outlet, NavLink as RRNavLink, useLocation, useNavigate } from 'react-ro
 import { useAuth } from '@/context/AuthContext';
 import { useEvent } from '@/context/EventContext';
 import NotificationBell from '@/components/NotificationBell';
+import CommandPalette from '@/components/CommandPalette';
 import EventSwitcherModal from '@/components/EventSwitcherModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -13,6 +14,7 @@ import {
   GitBranch, Users, ExternalLink, BarChart3, Truck, Building2,
   FileText, MapPin, DollarSign, UserCog, Bell, Settings, Key,
   ChevronDown, ChevronRight, LogOut, Menu, X, Shield, ClipboardCheck,
+  Search,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -179,6 +181,19 @@ export default function AppShell() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [eventModalOpen, setEventModalOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // ⌘K / Ctrl+K keyboard shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // Collapsed state for collapsible groups
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
@@ -404,6 +419,18 @@ export default function AppShell() {
             <h1 className="font-display text-[22px] text-primary">{pageTitle}</h1>
           </div>
           <div className="flex items-center gap-4">
+            {/* Search box */}
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="hidden sm:flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-muted/50 text-muted-foreground hover:bg-muted transition-colors min-w-[200px]"
+            >
+              <Search size={14} />
+              <span className="font-body text-xs flex-1 text-left">Search…</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">⌘K</kbd>
+            </button>
+            <button onClick={() => setPaletteOpen(true)} className="sm:hidden text-muted-foreground">
+              <Search size={20} />
+            </button>
             <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-gold/20 text-gold text-xs font-body font-medium">
               {activeEvent?.status}
             </span>
@@ -419,6 +446,8 @@ export default function AppShell() {
           <Outlet />
         </main>
       </div>
+
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
 
       <AnimatePresence>
         {eventModalOpen && <EventSwitcherModal onClose={() => setEventModalOpen(false)} />}
