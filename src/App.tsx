@@ -13,6 +13,8 @@ import NewPurchasePage from "@/pages/NewPurchasePage";
 import SalesPage from "@/pages/SalesPage";
 import NewSalePage from "@/pages/NewSalePage";
 import DistributionPage from "@/pages/DistributionPage";
+import ClientPortalPage from "@/pages/ClientPortalPage";
+import StaffQueuePage from "@/pages/StaffQueuePage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +31,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
             {/* Client/Supplier portals — no shell */}
-            <Route path="/client-portal/:token" element={<PlaceholderPage title="Client Portal" />} />
+            <Route path="/client-portal/:token" element={<ClientPortalPage />} />
             <Route path="/supplier-portal/:token" element={<PlaceholderPage title="Supplier Portal" />} />
 
             {/* App shell routes */}
@@ -43,7 +45,7 @@ const App = () => (
               <Route path="/sales/new" element={<NewSalePage />} />
               <Route path="/distribution" element={<DistributionPage />} />
               <Route path="/distribution/allocate/:id" element={<DistributionPage />} />
-              <Route path="/staff-queue" element={<PlaceholderPage title="Staff Queue" />} />
+              <Route path="/staff-queue" element={<StaffQueuePage />} />
               <Route path="/reports" element={<PlaceholderPage title="Reports" />} />
               <Route path="/users" element={<PlaceholderPage title="Users" />} />
               <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
