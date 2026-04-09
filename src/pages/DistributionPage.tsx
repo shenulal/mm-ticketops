@@ -291,7 +291,7 @@ export default function DistributionPage() {
                                   <button className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
                                 ) : li.status !== 'ALLOCATED' && li.status !== 'FULFILLED' ? (
                                   <button
-                                    onClick={() => { setAllocatorCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx }); setBlockSelected(false); setAllocated(false); setManualMode(false); setManualSelected(new Set()); }}
+                                    onClick={() => navigate(`/distribution/${s.id}/preview`)}
                                     className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-accent text-accent-foreground hover:opacity-90">
                                     Allocate
                                   </button>
