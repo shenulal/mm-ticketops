@@ -227,26 +227,27 @@ function PurchaseEditModal({ purchaseId, onClose, onSave }: {
 }) {
   const [activeTab, setActiveTab] = useState<'header' | 'lines'>('header');
   const [removeConfirm, setRemoveConfirm] = useState<string | null>(null);
+  const [vendor, setVendor] = useState('');
+  const [contract, setContract] = useState('');
+  const [date, setDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [lines, setLines] = useState<EditLineState[]>([]);
+  const [initialized, setInitialized] = useState(false);
 
   const purchase = MOCK_PURCHASES.find(p => p.id === purchaseId);
   if (!purchase) return null;
+
+  if (!initialized) {
+    setVendor(purchase.vendor); setContract(purchase.contract); setDate(purchase.date); setNotes(purchase.notes);
+    setLines(purchase.lines.map(l => { const stats = lineUnitStats(l.id); return { id: l.id, subGameId: l.subGameId, categoryId: l.categoryId, categoryLabel: l.categoryLabel, qty: l.qty, unitPrice: l.unitPrice, hasUnits: stats.total > 0, allocatedCount: stats.allocated }; }));
+    setInitialized(true);
+  }
 
   const purIdx = MOCK_PURCHASES.indexOf(purchase) + 1;
   const purLabel = `PUR-${String(purIdx).padStart(3, '0')}`;
   const matchSubGames = getSubGamesForMatch(purchase.matchId);
   const hasAnyAllocated = purchase.lines.some(l => lineUnitStats(l.id).allocated > 0);
 
-  // Header fields
-  const [vendor, setVendor] = useState(purchase.vendor);
-  const [contract, setContract] = useState(purchase.contract);
-  const [date, setDate] = useState(purchase.date);
-  const [notes, setNotes] = useState(purchase.notes);
-
-  // Lines state
-  const [lines, setLines] = useState<EditLineState[]>(() =>
-    purchase.lines.map(l => {
-      const stats = lineUnitStats(l.id);
-      return { id: l.id, subGameId: l.subGameId, categoryId: l.categoryId, categoryLabel: l.categoryLabel, qty: l.qty, unitPrice: l.unitPrice, hasUnits: stats.total > 0, allocatedCount: stats.allocated };
     })
   );
 
