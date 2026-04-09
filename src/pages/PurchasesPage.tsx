@@ -69,63 +69,15 @@ function UnitDrawer({ mode, onClose }: { mode: DrawerMode; onClose: () => void }
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          {lineItems.map(li => {
-            const units = MOCK_UNITS.filter(u => u.lineItemId === li.id);
-            const isGroupCollapsed = collapsed[li.id];
-            const [showAll, setShowAll] = useState(false);
-            const displayed = showAll ? units : units.slice(0, 24);
-
-            return (
-              <div key={li.id} className="mb-6">
-                {!isLineMode && (
-                  <button
-                    onClick={() => toggleGroup(li.id)}
-                    className="flex items-center gap-2 mb-3 w-full text-left"
-                  >
-                    <ChevronRight
-                      size={14}
-                      className={`text-muted-foreground transition-transform ${!isGroupCollapsed ? 'rotate-90' : ''}`}
-                    />
-                    <span className="font-body text-sm font-semibold text-foreground">
-                      Line {li.id.split('-').pop()} — {li.categoryLabel} ({units.length} units)
-                    </span>
-                  </button>
-                )}
-
-                {(isLineMode || !isGroupCollapsed) && (
-                  <>
-                    <div className="grid grid-cols-6 gap-2">
-                      {displayed.map(u => {
-                        const isAlloc = u.status === 'ALLOCATED';
-                        return (
-                          <div
-                            key={u.id}
-                            className="rounded-lg p-1.5 flex flex-col items-center justify-center text-center"
-                            style={{
-                              width: 72, height: 60,
-                              backgroundColor: isAlloc ? 'hsl(var(--success-bg))' : 'hsl(var(--warning-bg))',
-                              border: `1.5px solid ${isAlloc ? 'hsl(var(--success))' : 'hsl(var(--warning))'}`,
-                              color: isAlloc ? '#065F46' : '#92400E',
-                            }}
-                          >
-                            <span className="font-mono text-[10px] font-bold">{u.id}</span>
-                            <span className="font-body text-[9px] mt-0.5">
-                              {isAlloc ? `ALLOC` : `AVAIL · Pos ${u.setPos}`}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {!showAll && units.length > 24 && (
-                      <button onClick={() => setShowAll(true)} className="mt-3 font-body text-xs font-medium hover:underline text-accent">
-                        Show all {units.length} →
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
+          {lineItems.map(li => (
+            <UnitLineGroup
+              key={li.id}
+              li={li}
+              isLineMode={isLineMode}
+              isGroupCollapsed={!!collapsed[li.id]}
+              onToggle={() => toggleGroup(li.id)}
+            />
+          ))}
         </div>
 
         <div className="px-6 py-3 border-t border-border font-body text-xs text-muted-foreground">
