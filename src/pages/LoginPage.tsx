@@ -19,6 +19,8 @@ const DEMO_ACCOUNTS = [
     badgeBg: 'rgba(245,158,11,0.2)', badgeBorder: 'rgba(245,158,11,0.4)', badgeText: '#FDE68A' },
   { email: 'client@roadtrips.ae', name: 'David Clarke', badge: 'Client',
     badgeBg: 'rgba(34,197,94,0.2)', badgeBorder: 'rgba(34,197,94,0.4)', badgeText: '#86EFAC' },
+  { email: 'supplier@poxami.com', name: 'Clara Dufresne', badge: 'Supplier',
+    badgeBg: 'rgba(249,115,22,0.2)', badgeBorder: 'rgba(249,115,22,0.4)', badgeText: '#FDBA74' },
 ];
 
 const PILLS = [
