@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
+import { AppProvider } from "@/context/AppContext";
 import { EventProvider } from "@/context/EventContext";
 import AppShell from "@/components/AppShell";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -32,6 +33,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
+        <AppProvider>
         <EventProvider>
           <BrowserRouter>
             <Routes>
@@ -63,6 +65,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </EventProvider>
+        </AppProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

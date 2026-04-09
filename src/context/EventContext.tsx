@@ -1,19 +1,20 @@
 import React, { createContext, useContext, useState } from 'react';
-import { MOCK_EVENTS } from '@/data/mockData';
+import { useAppContext, type EventDef } from '@/context/AppContext';
 
 interface EventContextType {
-  activeEvent: typeof MOCK_EVENTS[0];
-  setActiveEvent: (event: typeof MOCK_EVENTS[0]) => void;
-  events: typeof MOCK_EVENTS;
+  activeEvent: EventDef;
+  setActiveEvent: (event: EventDef) => void;
+  events: EventDef[];
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
 
 export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeEvent, setActiveEvent] = useState(MOCK_EVENTS[0]);
+  const { events } = useAppContext();
+  const [activeEvent, setActiveEvent] = useState<EventDef>(events[0]);
 
   return (
-    <EventContext.Provider value={{ activeEvent, setActiveEvent, events: MOCK_EVENTS }}>
+    <EventContext.Provider value={{ activeEvent, setActiveEvent, events }}>
       {children}
     </EventContext.Provider>
   );
