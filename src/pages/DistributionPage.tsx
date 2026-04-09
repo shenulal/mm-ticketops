@@ -290,7 +290,7 @@ export default function DistributionPage() {
                             <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
                               <div className="flex gap-2">
                                 {isPending ? (
-                                  <button className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
+                                  <button onClick={() => setOversellCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx })} className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
                                 ) : li.status !== 'ALLOCATED' && li.status !== 'FULFILLED' ? (
                                   <button
                                     onClick={() => navigate(`/distribution/${s.id}/preview`)}
