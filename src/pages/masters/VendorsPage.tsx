@@ -95,64 +95,85 @@ function VendorDrawer({ vendor, onClose }: { vendor: Vendor; onClose: () => void
   const bridges = ctx.vendorEventBridges.filter(b => b.vendorId === vendor.id);
   const [assignOpen, setAssignOpen] = useState(false);
   const [eventAssignmentsOpen, setEventAssignmentsOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<'profile' | 'credentials'>('profile');
+  const credCount = ctx.getCredentialsForVendor(vendor.id).length;
 
   return (
     <div>
-      {/* SECTION A: Global Vendor Profile */}
-      <div className="border-l-4 border-accent pl-3 mb-4">
-        <h3 className="font-body text-[14px] font-semibold text-foreground">Global Vendor Profile</h3>
-      </div>
-      <FieldRow label="Name" value={vendor.name} />
-      <FieldRow label="Code" value={vendor.code} />
-      <FieldRow label="Type"><TypeBadge type={vendor.type} colorMap={TYPE_COLORS} /></FieldRow>
-      <FieldRow label="Website">{vendor.website ? <a href={`https://${vendor.website}`} target="_blank" rel="noreferrer" className="text-primary underline text-[12px] inline-flex items-center gap-1">{vendor.website} <ExternalLink size={10} /></a> : '—'}</FieldRow>
-      <FieldRow label="Country" value={vendor.country} />
-      <FieldRow label="Status"><StatusBadge active={vendor.isActive} /></FieldRow>
-
-      <SectionHeading title="Primary Contact" />
-      <FieldRow label="Name" value={vendor.primaryContactName} />
-      <FieldRow label="Email"><a href={`mailto:${vendor.primaryContactEmail}`} className="text-primary underline text-[12px]">{vendor.primaryContactEmail}</a></FieldRow>
-      <FieldRow label="Phone" value={vendor.primaryContactPhone || '—'} />
-
-      {vendor.notes && <><SectionHeading title="Notes" /><p className="text-[13px] font-body text-muted-foreground">{vendor.notes}</p></>}
-
-      <p className="text-[11px] font-body text-muted-foreground italic mt-3 mb-6">This information is shared across all events.</p>
-
-      {/* SECTION B: Event Assignments */}
-      <div className="border-l-4 border-primary pl-3 mb-3">
-        <button onClick={() => setEventAssignmentsOpen(o => !o)} className="flex items-center gap-2 w-full text-left">
-          {eventAssignmentsOpen ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />}
-          <h3 className="font-body text-[14px] font-semibold text-foreground">Event Assignments</h3>
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-body font-medium bg-primary/10 text-primary">{bridges.length} event{bridges.length !== 1 ? 's' : ''}</span>
+      {/* Tab bar */}
+      <div className="flex gap-1 mb-4 border-b border-border">
+        <button onClick={() => setActiveTab('profile')}
+          className={`px-4 py-2 text-[13px] font-body font-medium border-b-2 transition-colors ${activeTab === 'profile' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+          Profile
+        </button>
+        <button onClick={() => setActiveTab('credentials')}
+          className={`px-4 py-2 text-[13px] font-body font-medium border-b-2 transition-colors flex items-center gap-1.5 ${activeTab === 'credentials' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+          Credentials
+          {credCount > 0 && <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary">{credCount}</span>}
         </button>
       </div>
 
-      {eventAssignmentsOpen && (
-        <div className="space-y-3">
-          {bridges.length === 0 && (
-            <p className="text-[12px] text-muted-foreground font-body italic">Not assigned to any events yet.</p>
-          )}
-          {bridges.map(b => (
-            <EventAssignmentCard key={b.id} bridge={b} vendorId={vendor.id} />
-          ))}
+      {activeTab === 'profile' ? (
+        <>
+          {/* SECTION A: Global Vendor Profile */}
+          <div className="border-l-4 border-accent pl-3 mb-4">
+            <h3 className="font-body text-[14px] font-semibold text-foreground">Global Vendor Profile</h3>
+          </div>
+          <FieldRow label="Name" value={vendor.name} />
+          <FieldRow label="Code" value={vendor.code} />
+          <FieldRow label="Type"><TypeBadge type={vendor.type} colorMap={TYPE_COLORS} /></FieldRow>
+          <FieldRow label="Website">{vendor.website ? <a href={`https://${vendor.website}`} target="_blank" rel="noreferrer" className="text-primary underline text-[12px] inline-flex items-center gap-1">{vendor.website} <ExternalLink size={10} /></a> : '—'}</FieldRow>
+          <FieldRow label="Country" value={vendor.country} />
+          <FieldRow label="Status"><StatusBadge active={vendor.isActive} /></FieldRow>
 
-          {!assignOpen ? (
-            <button onClick={() => setAssignOpen(true)}
-              className="w-full py-2 rounded-xl border border-dashed border-border text-[13px] font-body text-muted-foreground hover:bg-muted/50 transition-colors">
-              + Assign to New Event
+          <SectionHeading title="Primary Contact" />
+          <FieldRow label="Name" value={vendor.primaryContactName} />
+          <FieldRow label="Email"><a href={`mailto:${vendor.primaryContactEmail}`} className="text-primary underline text-[12px]">{vendor.primaryContactEmail}</a></FieldRow>
+          <FieldRow label="Phone" value={vendor.primaryContactPhone || '—'} />
+
+          {vendor.notes && <><SectionHeading title="Notes" /><p className="text-[13px] font-body text-muted-foreground">{vendor.notes}</p></>}
+
+          <p className="text-[11px] font-body text-muted-foreground italic mt-3 mb-6">This information is shared across all events.</p>
+
+          {/* SECTION B: Event Assignments */}
+          <div className="border-l-4 border-primary pl-3 mb-3">
+            <button onClick={() => setEventAssignmentsOpen(o => !o)} className="flex items-center gap-2 w-full text-left">
+              {eventAssignmentsOpen ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />}
+              <h3 className="font-body text-[14px] font-semibold text-foreground">Event Assignments</h3>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-body font-medium bg-primary/10 text-primary">{bridges.length} event{bridges.length !== 1 ? 's' : ''}</span>
             </button>
-          ) : (
-            <AssignToEventForm vendorId={vendor.id} assignedEventIds={bridges.map(b => b.eventId)} onDone={() => setAssignOpen(false)} />
-          )}
-        </div>
-      )}
+          </div>
 
-      <div className="mt-6 flex gap-3">
-        <button onClick={() => { ctx.updateVendor(vendor.id, { isActive: !vendor.isActive }); toast.success(`Vendor ${vendor.isActive ? 'deactivated' : 'activated'}`); onClose(); }}
-          className={`px-4 py-2 rounded-xl text-[13px] font-body font-medium ${vendor.isActive ? 'bg-destructive/10 text-destructive hover:bg-destructive/20' : 'bg-success/10 text-success hover:bg-success/20'}`}>
-          {vendor.isActive ? 'Deactivate' : 'Activate'}
-        </button>
-      </div>
+          {eventAssignmentsOpen && (
+            <div className="space-y-3">
+              {bridges.length === 0 && (
+                <p className="text-[12px] text-muted-foreground font-body italic">Not assigned to any events yet.</p>
+              )}
+              {bridges.map(b => (
+                <EventAssignmentCard key={b.id} bridge={b} vendorId={vendor.id} />
+              ))}
+
+              {!assignOpen ? (
+                <button onClick={() => setAssignOpen(true)}
+                  className="w-full py-2 rounded-xl border border-dashed border-border text-[13px] font-body text-muted-foreground hover:bg-muted/50 transition-colors">
+                  + Assign to New Event
+                </button>
+              ) : (
+                <AssignToEventForm vendorId={vendor.id} assignedEventIds={bridges.map(b => b.eventId)} onDone={() => setAssignOpen(false)} />
+              )}
+            </div>
+          )}
+
+          <div className="mt-6 flex gap-3">
+            <button onClick={() => { ctx.updateVendor(vendor.id, { isActive: !vendor.isActive }); toast.success(`Vendor ${vendor.isActive ? 'deactivated' : 'activated'}`); onClose(); }}
+              className={`px-4 py-2 rounded-xl text-[13px] font-body font-medium ${vendor.isActive ? 'bg-destructive/10 text-destructive hover:bg-destructive/20' : 'bg-success/10 text-success hover:bg-success/20'}`}>
+              {vendor.isActive ? 'Deactivate' : 'Activate'}
+            </button>
+          </div>
+        </>
+      ) : (
+        <VendorCredentialsTab vendorId={vendor.id} />
+      )}
     </div>
   );
 }
