@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RoleGuard from '@/components/RoleGuard';
 import { MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_MATCHES } from '@/data/mockData';
