@@ -211,5 +211,3 @@ export default function SalesPage() {
     </div>
   );
 }
-
-import React from 'react';
