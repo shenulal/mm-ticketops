@@ -4,9 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
+import { EventProvider } from "@/context/EventContext";
 import AppShell from "@/components/AppShell";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
-import PlaceholderPage from "@/pages/PlaceholderPage";
 import DashboardPage from "@/pages/DashboardPage";
 import PurchasesPage from "@/pages/PurchasesPage";
 import NewPurchasePage from "@/pages/NewPurchasePage";
@@ -20,6 +21,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import UsersPage from "@/pages/UsersPage";
 import EventsPage from "@/pages/EventsPage";
 import EventDetailPage from "@/pages/EventDetailPage";
+import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,35 +32,37 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <EventProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            {/* Client/Supplier portals — no shell */}
-            <Route path="/client-portal/:token" element={<ClientPortalPage />} />
-            <Route path="/supplier-portal/:token" element={<SupplierPortalPage />} />
+              {/* Portals — no shell */}
+              <Route path="/client-portal/:token" element={<ClientPortalPage />} />
+              <Route path="/supplier-portal/:token" element={<SupplierPortalPage />} />
 
-            {/* App shell routes */}
-            <Route element={<AppShell />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/events" element={<EventsPage />} />
-              <Route path="/events/:id" element={<EventDetailPage />} />
-              <Route path="/purchases" element={<PurchasesPage />} />
-              <Route path="/purchases/new" element={<NewPurchasePage />} />
-              <Route path="/sales" element={<SalesPage />} />
-              <Route path="/sales/new" element={<NewSalePage />} />
-              <Route path="/distribution" element={<DistributionPage />} />
-              <Route path="/distribution/allocate/:id" element={<DistributionPage />} />
-              <Route path="/staff-queue" element={<StaffQueuePage />} />
-              <Route path="/reports" element={<ReportsPage />} />
-              <Route path="/users" element={<UsersPage />} />
-              <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
-            </Route>
+              {/* App shell routes — protected */}
+              <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/events" element={<EventsPage />} />
+                <Route path="/events/:id" element={<EventDetailPage />} />
+                <Route path="/purchases" element={<PurchasesPage />} />
+                <Route path="/purchases/new" element={<NewPurchasePage />} />
+                <Route path="/sales" element={<SalesPage />} />
+                <Route path="/sales/new" element={<NewSalePage />} />
+                <Route path="/distribution" element={<DistributionPage />} />
+                <Route path="/distribution/allocate/:id" element={<DistributionPage />} />
+                <Route path="/staff-queue" element={<StaffQueuePage />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/users" element={<UsersPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </EventProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

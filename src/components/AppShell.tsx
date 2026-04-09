@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useEvent } from '@/context/EventContext';
 import RoleGuard from '@/components/RoleGuard';
+import NotificationBell from '@/components/NotificationBell';
+import EventSwitcherModal from '@/components/EventSwitcherModal';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Calendar, ShoppingCart, TrendingUp,
   GitBranch, Users, BarChart3, UserCog, Settings,
-  Bell, ChevronDown, LogOut, Menu, X
+  ChevronDown, LogOut, Menu, X
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -37,10 +41,18 @@ const PAGE_TITLES: Record<string, string> = {
 
 export default function AppShell() {
   const { currentUser, logout } = useAuth();
+  const { activeEvent } = useEvent();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [eventModalOpen, setEventModalOpen] = useState(false);
 
   const pageTitle = PAGE_TITLES[location.pathname] || 'TicketOps';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const navLinkClass = (isActive: boolean) =>
     `flex items-center gap-3 px-4 py-2.5 text-sm font-body rounded-md transition-colors ${
@@ -49,53 +61,43 @@ export default function AppShell() {
         : 'text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-[rgba(255,255,255,0.05)]'
     }`;
 
+  const shortEventName = activeEvent.code === 'FIFA-WC-2026' ? 'FIFA WC 2026' : 'F1 SGP 2026';
+
   const sidebarContent = (
     <>
-      {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5">
         <div className="w-9 h-9 rounded-full bg-gold flex items-center justify-center text-navy font-display text-lg font-bold">T</div>
         <span className="font-display text-xl text-sidebar-foreground">TicketOps</span>
       </div>
 
-      {/* Event pill */}
       <div className="px-4 mb-4">
-        <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-gold/20 text-gold text-sm font-body">
-          <span className="truncate">FIFA WC 2026</span>
+        <button
+          onClick={() => setEventModalOpen(true)}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-gold/20 text-gold text-sm font-body hover:bg-gold/30 transition-colors"
+        >
+          <span className="truncate">{shortEventName}</span>
           <ChevronDown size={14} />
         </button>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 space-y-0.5">
         {NAV_ITEMS.map(item => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) => navLinkClass(isActive)}
-          >
-            <item.icon size={18} />
-            <span>{item.label}</span>
+          <NavLink key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
+            className={({ isActive }) => navLinkClass(isActive)}>
+            <item.icon size={18} /><span>{item.label}</span>
           </NavLink>
         ))}
-
         <RoleGuard roles={['super_admin']}>
           <div className="my-3 mx-2 border-t border-sidebar-border" />
           {ADMIN_ITEMS.map(item => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={() => setMobileOpen(false)}
-              className={({ isActive }) => navLinkClass(isActive)}
-            >
-              <item.icon size={18} />
-              <span>{item.label}</span>
+            <NavLink key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
+              className={({ isActive }) => navLinkClass(isActive)}>
+              <item.icon size={18} /><span>{item.label}</span>
             </NavLink>
           ))}
         </RoleGuard>
       </nav>
 
-      {/* User */}
       {currentUser && (
         <div className="px-4 py-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3">
@@ -106,7 +108,7 @@ export default function AppShell() {
               <p className="text-sm text-sidebar-foreground truncate">{currentUser.name}</p>
               <p className="text-xs text-sidebar-foreground/50 capitalize">{currentUser.role.replace('_', ' ')}</p>
             </div>
-            <button onClick={logout} className="text-sidebar-foreground/50 hover:text-sidebar-foreground">
+            <button onClick={handleLogout} className="text-sidebar-foreground/50 hover:text-sidebar-foreground">
               <LogOut size={16} />
             </button>
           </div>
@@ -117,27 +119,37 @@ export default function AppShell() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex w-[260px] flex-col bg-navy shrink-0">
         {sidebarContent}
       </aside>
 
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-foreground/40" onClick={() => setMobileOpen(false)} />
-          <aside className="relative w-[260px] h-full flex flex-col bg-navy">
-            <button onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 text-sidebar-foreground">
-              <X size={20} />
-            </button>
-            {sidebarContent}
-          </aside>
-        </div>
-      )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-foreground/40"
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: -260 }}
+              animate={{ x: 0 }}
+              exit={{ x: -260 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="relative w-[260px] h-full flex flex-col bg-navy"
+            >
+              <button onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 text-sidebar-foreground">
+                <X size={20} />
+              </button>
+              {sidebarContent}
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
         <header className="h-16 bg-bg-card border-b border-border flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center gap-3">
             <button onClick={() => setMobileOpen(true)} className="md:hidden text-foreground">
@@ -147,12 +159,9 @@ export default function AppShell() {
           </div>
           <div className="flex items-center gap-4">
             <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-gold/20 text-gold text-xs font-body font-medium">
-              SELLING
+              {activeEvent.status}
             </span>
-            <button className="relative text-text-muted hover:text-foreground">
-              <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-danger rounded-full" />
-            </button>
+            <NotificationBell />
             {currentUser && (
               <div className="w-8 h-8 rounded-full bg-navy flex items-center justify-center text-primary-foreground text-xs font-mono font-bold">
                 {currentUser.initials}
@@ -161,11 +170,14 @@ export default function AppShell() {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 overflow-auto p-6">
           <Outlet />
         </main>
       </div>
+
+      <AnimatePresence>
+        {eventModalOpen && <EventSwitcherModal onClose={() => setEventModalOpen(false)} />}
+      </AnimatePresence>
     </div>
   );
 }

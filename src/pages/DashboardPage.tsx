@@ -1,6 +1,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { MOCK_SALES } from '@/data/mockData';
 import { ShoppingCart, TrendingUp, CheckCircle, Send, AlertTriangle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const STAT_CARDS = [
   { label: 'Total Purchased', value: '203', sub: 'M01 — MEX v RSA', borderColor: '#0B2D5E', icon: ShoppingCart, iconColor: '#0B2D5E' },
@@ -240,7 +241,16 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* ROW 1: Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {STAT_CARDS.map(card => <StatCard key={card.label} {...card} />)}
+        {STAT_CARDS.map((card, i) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1, duration: 0.3 }}
+          >
+            <StatCard {...card} />
+          </motion.div>
+        ))}
       </div>
 
       {/* ROW 2: Oversell banner */}
