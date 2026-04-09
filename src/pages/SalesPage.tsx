@@ -658,6 +658,13 @@ export default function SalesPage() {
         {upgradeCtx && <UpgradeModal saleId={upgradeCtx.saleId} line={upgradeCtx.line} lineIdx={upgradeCtx.lineIdx}
           onClose={() => setUpgradeCtx(null)} onConfirm={() => setUpgradeCtx(null)} />}
       </AnimatePresence>
+      <AnimatePresence>
+        {oversellCtx && <OversellResolutionDrawer
+          saleId={oversellCtx.saleId} lineItem={oversellCtx.line} lineIdx={oversellCtx.lineIdx}
+          onClose={() => setOversellCtx(null)}
+          onResolved={() => { setApprovedLines(prev => new Set(prev).add(oversellCtx.line.id)); setOversellCtx(null); }}
+        />}
+      </AnimatePresence>
     </div>
   );
 }
