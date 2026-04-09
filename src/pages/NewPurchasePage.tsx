@@ -1,19 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { MOCK_MATCHES } from '@/data/mockData';
+import { useAppContext } from '@/context/AppContext';
+import { useEvent } from '@/context/EventContext';
 import { Lock, Loader2, CheckCircle, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
-
-const VENDORS = [
-  { value: 'poxami', label: 'poxami', contract: '2025-100129' },
-  { value: 'viagogo', label: 'viagogo', contract: '2025-100888' },
-  { value: 'stubhub', label: 'StubHub', contract: '' },
-];
-const CATEGORIES = ['Top Cat 1', 'Cat 2', 'Cat 3', 'Cat 4', 'Cat 5'];
 
 interface FormState {
   matchId: string;
