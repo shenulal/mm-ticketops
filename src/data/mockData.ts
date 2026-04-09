@@ -390,6 +390,10 @@ export function getRevenueSummary(eventId?: string, matchId?: string, subGameId?
   });
   const purchaseLines = MOCK_PURCHASE_LINE_ITEMS.filter(l => {
     if (subGameId && l.subGameId !== subGameId) return false;
+    if (matchId) {
+      const sg = MOCK_SUBGAMES.find(s => s.id === l.subGameId);
+      if (sg && sg.matchId !== matchId) return false;
+    }
     return true;
   });
   const totalSaleRevenue  = lines.reduce((s, l) => s + l.lineTotal, 0);
