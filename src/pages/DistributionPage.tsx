@@ -117,6 +117,7 @@ export default function DistributionPage() {
   const [allocatedLineIds, setAllocatedLineIds] = useState<Set<string>>(new Set());
   const [allocateAllSale, setAllocateAllSale] = useState<string | null>(null);
   const [upgradeCtx, setUpgradeCtx] = useState<{ saleId: string; lineItem: SaleLineItem; lineIdx: number } | null>(null);
+  const [oversellCtx, setOversellCtx] = useState<{ saleId: string; lineItem: SaleLineItem; lineIdx: number } | null>(null);
 
   const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   const toggleLine = (id: string) => setExpandedLines(prev => ({ ...prev, [id]: !prev[id] }));
