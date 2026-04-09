@@ -170,16 +170,20 @@ export default function ManagerDashboard() {
           <div className="col-span-3 space-y-3">
             <h2 className="font-display text-[18px]" style={{ color: CHART_COLORS.navy }}>Action Required</h2>
             <div className="space-y-2">
-              {MOCK_SALE_LINE_ITEMS.filter(l => l.oversellFlag).map(li => (
+              {MOCK_SALE_LINE_ITEMS.filter(l => l.oversellFlag).map(li => {
+                const sale = MOCK_SALES.find(s => s.id === li.saleId);
+                const lineIdx = sale ? sale.lines.findIndex(l => l.id === li.id) : 0;
+                return (
                 <div key={li.id} className="rounded-xl p-3 bg-card border-l-4 flex items-center gap-3" style={{ borderColor: CHART_COLORS.amber }}>
                   <AlertTriangle size={16} style={{ color: CHART_COLORS.amber }} />
                   <div className="flex-1">
                     <p className="font-body text-sm font-medium text-foreground">Oversell — {li.categoryLabel} × {li.qty}</p>
                     <p className="font-body text-[11px] text-muted-foreground">{li.saleId.toUpperCase()} | M01</p>
                   </div>
-                  <button onClick={() => navigate('/sales')} className="px-3 py-1.5 rounded-lg font-body text-[11px] font-medium text-primary-foreground hover:opacity-90" style={{ backgroundColor: CHART_COLORS.amber }}>Review</button>
+                  <button onClick={() => setOversellCtx({ saleId: li.saleId, line: li, lineIdx })} className="px-3 py-1.5 rounded-lg font-body text-[11px] font-medium text-primary-foreground hover:opacity-90" style={{ backgroundColor: CHART_COLORS.amber }}>Review &amp; Approve</button>
                 </div>
-              ))}
+                );
+              })}
               {dispatch.pending > 0 && (
                 <div className="rounded-xl p-3 bg-card border-l-4 flex items-center gap-3" style={{ borderColor: '#DC2626' }}>
                   <Clock size={16} style={{ color: '#DC2626' }} />
