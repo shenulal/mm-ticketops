@@ -153,7 +153,7 @@ const App = () => (
               </Route>
 
               {/* ROOT redirect */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<Navigate to="/login" replace />} />
             </Routes>
           </BrowserRouter>
         </EventProvider>
