@@ -12,6 +12,7 @@ import PurchasesPage from "@/pages/PurchasesPage";
 import NewPurchasePage from "@/pages/NewPurchasePage";
 import SalesPage from "@/pages/SalesPage";
 import NewSalePage from "@/pages/NewSalePage";
+import DistributionPage from "@/pages/DistributionPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
