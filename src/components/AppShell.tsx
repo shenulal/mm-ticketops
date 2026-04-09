@@ -14,7 +14,7 @@ import {
   GitBranch, Users, ExternalLink, BarChart3, Truck, Building2,
   FileText, MapPin, DollarSign, UserCog, Bell, Settings, Key,
   ChevronDown, ChevronRight, LogOut, Menu, X, Shield, ClipboardCheck,
-  Search,
+  Search, Zap, Sliders,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -23,7 +23,7 @@ const ICONS: Record<string, LucideIcon> = {
   LayoutDashboard, Calendar, ShoppingCart, PlusCircle, TrendingUp,
   GitBranch, Users, ExternalLink, BarChart3, Truck, Building2,
   FileText, MapPin, DollarSign, UserCog, Bell, Settings, Key,
-  Shield, ClipboardCheck,
+  Shield, ClipboardCheck, Zap, Sliders,
 };
 
 // ─── Types ─────────────────────────────────────────────
@@ -127,6 +127,10 @@ const NAV_GROUPS: NavGroup[] = [
         roles: ['super_admin', 'event_admin'] },
       { id: 'vendor-credentials', label: 'Vendor Credentials', icon: 'Key', path: '/admin/vendor-credentials',
         roles: ['super_admin', 'event_admin', 'ops_manager', 'sr_operator'] },
+      { id: 'alloc-policies', label: 'Allocation Policies', icon: 'Zap', path: '/admin/allocation-policies',
+        roles: ['super_admin', 'event_admin', 'ops_manager', 'sr_operator'] },
+      { id: 'alloc-settings', label: 'Allocation Settings', icon: 'Sliders', path: '/admin/allocation-settings',
+        roles: ['super_admin'] },
       { id: 'audit-log', label: 'Audit Log', icon: 'Shield', path: '/admin/audit-log',
         roles: ['super_admin'] },
       { id: 'reconciliation', label: 'Reconciliation', icon: 'ClipboardCheck', path: '/admin/reconciliation',
