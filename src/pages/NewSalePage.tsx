@@ -3,197 +3,21 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
 import { useEvent } from '@/context/EventContext';
 import { getInventoryAvailable } from '@/data/mockData';
-import { ChevronRight, Lock, CheckCircle, AlertTriangle, Loader2, CalendarIcon, Plus, X } from 'lucide-react';
+import { ChevronRight, Lock, CheckCircle, AlertTriangle, Loader2, CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface LineItem {
-  id: string;
-  subGameId: string;
-  categoryId: string;
-  qty: string;
-  price: string;
-}
+import LineItemCard, { type LineItemData } from '@/components/forms/LineItemCard';
 
 function makeId() { return `li-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`; }
 
-/* ── Inventory indicator per line ── */
-function InventoryIndicator({ subGameId, categoryId, qty }: { subGameId: string; categoryId: string; qty: number }) {
-  const ctx = useAppContext();
-
-  if (!subGameId || !categoryId) {
-    return (
-      <div className="rounded-lg p-3 border border-border bg-muted">
-        <p className="font-body text-xs text-muted-foreground">Select sub-game and category to check stock</p>
-      </div>
-    );
-  }
-
-  const available = getInventoryAvailable(subGameId, categoryId);
-  const sg = ctx.getSubGame(subGameId);
-  const catLabel = sg?.categories.find(c => c.id === categoryId)?.displayName ?? categoryId;
-  const remaining = available - qty;
-  const isOversell = qty > 0 && qty > available;
-  const isClose = qty > 0 && !isOversell && remaining <= 5;
-
-  if (qty === 0) {
-    return (
-      <div className="rounded-lg p-3 border border-border bg-muted">
-        <p className="font-body text-xs text-muted-foreground">{available} {catLabel} units available — enter quantity to check</p>
-      </div>
-    );
-  }
-
-  if (isOversell) {
-    return (
-      <div className="rounded-lg p-3 border border-destructive bg-destructive/10">
-        <div className="flex items-center gap-2">
-          <AlertTriangle size={14} className="text-destructive shrink-0" />
-          <p className="font-body text-xs font-bold text-destructive">
-            OVERSELL: Only {available} {catLabel} units available · this line will exceed by {qty - available}
-          </p>
-        </div>
-        <p className="font-body text-xs text-destructive/80 mt-1">A manager approval request will be raised for this line specifically.</p>
-      </div>
-    );
-  }
-
-  if (isClose) {
-    return (
-      <div className="rounded-lg p-3 border border-amber-400 bg-amber-50">
-        <div className="flex items-center gap-2">
-          <AlertTriangle size={14} className="text-amber-600 shrink-0" />
-          <p className="font-body text-xs font-bold text-amber-800">
-            {available} units available · close to limit · {remaining} will remain
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-lg p-3 border border-emerald-300 bg-emerald-50">
-      <div className="flex items-center gap-2">
-        <CheckCircle size={14} className="text-emerald-600 shrink-0" />
-        <p className="font-body text-xs font-bold text-emerald-800">
-          {available} {catLabel} units available · {remaining} will remain after this sale
-        </p>
-      </div>
-      <div className="w-full h-1.5 rounded-full bg-emerald-200 mt-2">
-        <div className="h-1.5 rounded-full bg-emerald-500" style={{ width: `${Math.min((qty / available) * 100, 100)}%` }} />
-      </div>
-    </div>
-  );
-}
-
-/* ── Line Item Card ── */
-function LineItemCard({
-  line, index, matchId, onUpdate, onRemove, canRemove, errors,
-}: {
-  line: LineItem; index: number; matchId: string;
-  onUpdate: (id: string, patch: Partial<LineItem>) => void;
-  onRemove: (id: string) => void;
-  canRemove: boolean;
-  errors: Record<string, boolean>;
-}) {
-  const ctx = useAppContext();
-  const isMultiSg = ctx.hasMultipleSubGames(matchId);
-  const subGames = ctx.getSubGamesForMatch(matchId);
-  const defaultSgId = !isMultiSg && subGames.length === 1 ? subGames[0].id : line.subGameId;
-  const effectiveSgId = isMultiSg ? line.subGameId : defaultSgId;
-  const categories = effectiveSgId ? ctx.getCategoriesForSubGame(effectiveSgId).filter(c => c.isActive) : [];
-
-  // Auto-set subGameId for single sub-game matches
-  if (!isMultiSg && subGames.length === 1 && line.subGameId !== subGames[0].id) {
-    onUpdate(line.id, { subGameId: subGames[0].id });
-  }
-
-  const qty = parseInt(line.qty) || 0;
-  const price = parseFloat(line.price) || 0;
-  const lineTotal = qty * price;
-
-  const inputCls = (field: string) =>
-    `w-full h-10 px-3 rounded-lg font-body text-sm outline-none transition-all border ${
-      errors[`${line.id}-${field}`] ? 'border-2 border-destructive' : 'border-border focus:ring-1 focus:ring-accent'
-    } bg-card`;
-
-  return (
-    <div className="border border-border rounded-xl p-5 relative">
-      <div className="flex items-center justify-between mb-4">
-        <span className="font-body text-sm font-semibold text-foreground">Line {index + 1}</span>
-        {canRemove && (
-          <button onClick={() => onRemove(line.id)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive">
-            <X size={16} />
-          </button>
-        )}
-      </div>
-
-      {/* Row 1: Sub-game + Category */}
-      <div className={`grid gap-4 mb-4 ${isMultiSg ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        {isMultiSg && (
-          <div>
-            <label className="block font-body text-xs font-medium text-foreground mb-1.5">Sub-Game *</label>
-            <select value={line.subGameId}
-              onChange={e => onUpdate(line.id, { subGameId: e.target.value, categoryId: '' })}
-              className={inputCls('subGameId')}>
-              <option value="">Select session</option>
-              {subGames.map(sg => <option key={sg.id} value={sg.id}>{sg.name}</option>)}
-            </select>
-            {errors[`${line.id}-subGameId`] && <p className="font-body text-xs mt-1 text-destructive">Required</p>}
-          </div>
-        )}
-        <div>
-          <label className="block font-body text-xs font-medium text-foreground mb-1.5">Category *</label>
-          <select value={line.categoryId}
-            onChange={e => onUpdate(line.id, { categoryId: e.target.value })}
-            className={inputCls('categoryId')} disabled={!effectiveSgId}>
-            <option value="">Select category</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.displayName}</option>)}
-          </select>
-          {errors[`${line.id}-categoryId`] && <p className="font-body text-xs mt-1 text-destructive">Required</p>}
-        </div>
-      </div>
-
-      {/* Row 2: Qty + Price + Total */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div>
-          <label className="block font-body text-xs font-medium text-foreground mb-1.5">Quantity *</label>
-          <input type="number" min={1} value={line.qty} onChange={e => onUpdate(line.id, { qty: e.target.value })}
-            placeholder="0" className={inputCls('qty')} />
-          {errors[`${line.id}-qty`] && <p className="font-body text-xs mt-1 text-destructive">Required</p>}
-        </div>
-        <div>
-          <label className="block font-body text-xs font-medium text-foreground mb-1.5">Price per Ticket (AED)</label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-body text-xs text-muted-foreground">AED</span>
-            <input type="number" min={0} step={0.01} value={line.price} onChange={e => onUpdate(line.id, { price: e.target.value })}
-              placeholder="0.00" className={cn(inputCls('price'), 'pl-11')} />
-          </div>
-        </div>
-        <div>
-          <label className="block font-body text-xs font-medium text-foreground mb-1.5">Line Total</label>
-          <div className="h-10 px-3 rounded-lg bg-muted border border-border flex items-center font-mono text-sm text-foreground">
-            AED {lineTotal.toLocaleString()}
-          </div>
-        </div>
-      </div>
-
-      {/* Row 3: Inventory indicator */}
-      <InventoryIndicator subGameId={effectiveSgId} categoryId={line.categoryId} qty={qty} />
-    </div>
-  );
-}
-
-/* ── Main Page ── */
 export default function NewSalePage() {
   const navigate = useNavigate();
   const ctx = useAppContext();
   const { activeEvent } = useEvent();
 
-  // Dynamic data from AppContext
   const eventMatches = useMemo(() =>
     ctx.getEvent(activeEvent.id)?.matches.filter(m => m.isActive) ?? [],
   [ctx, activeEvent.id]);
@@ -211,13 +35,12 @@ export default function NewSalePage() {
   const [saleDate, setSaleDate] = useState<Date>(new Date());
   const [notes, setNotes] = useState('');
   const [autoFilled, setAutoFilled] = useState(false);
+  const [contractFlash, setContractFlash] = useState(false);
   const [headerErrors, setHeaderErrors] = useState<Record<string, boolean>>({});
 
-  // Default sub-game for first match
   const defaultSg = ctx.getSubGamesForMatch(matchId)[0]?.id ?? '';
 
-  // Line items — 3 pre-filled demo lines
-  const [lines, setLines] = useState<LineItem[]>([
+  const [lines, setLines] = useState<LineItemData[]>([
     { id: makeId(), subGameId: defaultSg, categoryId: 'topcat1', qty: '12', price: '34881' },
     { id: makeId(), subGameId: defaultSg, categoryId: 'cat2', qty: '6', price: '15420' },
     { id: makeId(), subGameId: defaultSg, categoryId: 'cat3', qty: '20', price: '10280' },
@@ -226,7 +49,7 @@ export default function NewSalePage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const updateLine = (id: string, patch: Partial<LineItem>) => {
+  const updateLine = (id: string, patch: Partial<LineItemData>) => {
     setLines(prev => prev.map(l => l.id === id ? { ...l, ...patch } : l));
     Object.keys(patch).forEach(k => setLineErrors(e => ({ ...e, [`${id}-${k}`]: false })));
   };
@@ -243,10 +66,16 @@ export default function NewSalePage() {
     setClientId(val);
     setHeaderErrors(e => ({ ...e, client: false }));
     const ctr = ctx.getActiveContracts(val, activeEvent.id).find(c => c.contractType === 'SALE');
-    if (ctr) { setContract(ctr.contractRef); setAutoFilled(true); } else { setAutoFilled(false); }
+    if (ctr) {
+      setContract(ctr.contractRef);
+      setAutoFilled(true);
+      setContractFlash(true);
+      setTimeout(() => setContractFlash(false), 600);
+    } else {
+      setAutoFilled(false);
+    }
   };
 
-  // Summary computations
   const lineSummaries = useMemo(() => lines.map(l => {
     const qty = parseInt(l.qty) || 0;
     const price = parseFloat(l.price) || 0;
@@ -293,7 +122,73 @@ export default function NewSalePage() {
       headerErrors[field] ? 'border-2 border-destructive' : 'border-border focus:ring-1 focus:ring-accent'
     } bg-card`;
 
-  const selectedClient = ctx.getClient(clientId);
+  if (success) {
+    return (
+      <div className="max-w-[800px] mx-auto mt-8 pb-12">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          className="bg-card rounded-2xl shadow-sm border p-8">
+          <div className="flex justify-center mb-6">
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              className="w-20 h-20 rounded-full bg-emerald-50 border-2 border-emerald-400 flex items-center justify-center">
+              <CheckCircle size={40} className="text-emerald-600" />
+            </motion.div>
+          </div>
+
+          <h2 className="font-display text-[26px] text-primary text-center mb-1">Sale Saved Successfully</h2>
+          <div className="flex justify-center mb-6">
+            <span className="font-mono text-sm px-3 py-1 rounded-full bg-primary/10 text-primary font-bold">SALE-003</span>
+          </div>
+
+          <div className="space-y-2 max-h-[200px] overflow-y-auto mb-4">
+            {lines.map((l, i) => {
+              const s = lineSummaries[i];
+              return (
+                <motion.div key={l.id}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="bg-muted/50 rounded-xl p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-primary/10 text-primary">L{i + 1}</span>
+                    <span className="font-body text-sm text-foreground">{s.catLabel || '—'}</span>
+                  </div>
+                  <span className="font-body text-sm text-muted-foreground">{s.qty} tickets · {ctx.formatCurrency(s.total)}</span>
+                  <span className="font-body text-[11px]">
+                    {s.isOversell
+                      ? <span className="text-amber-600 font-medium">PENDING APPROVAL ⚠</span>
+                      : <span className="text-emerald-600 font-medium">UNALLOCATED ✓</span>}
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <div className="border-t border-border pt-3 flex items-center justify-between mb-6">
+            <span className="font-body text-sm text-muted-foreground">
+              {lines.length} line{lines.length > 1 ? 's' : ''} · {totalQty} total tickets
+            </span>
+            <span className="font-body text-sm font-semibold text-foreground">
+              Total: {ctx.formatCurrency(totalValue)}
+            </span>
+          </div>
+
+          <div className="flex gap-3">
+            <button onClick={() => navigate('/distribution')}
+              className="flex-1 h-11 rounded-xl font-body text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
+              Allocate Lines →
+            </button>
+            <button onClick={() => {
+              setSuccess(false);
+              setLines([{ id: makeId(), subGameId: defaultSg, categoryId: '', qty: '', price: '' }]);
+            }}
+              className="flex-1 h-11 rounded-xl font-body text-sm font-bold border border-border text-foreground hover:bg-muted transition-colors">
+              Add Another Sale +
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[800px] mx-auto mt-8 pb-12">
@@ -308,9 +203,8 @@ export default function NewSalePage() {
 
       {/* ── HEADER SECTION ── */}
       <div className="bg-card rounded-xl shadow-sm p-6 mb-4 space-y-5">
-        {/* Event */}
-        <div>
-          <label className="block font-body text-xs font-medium text-foreground mb-1.5">Active Event</label>
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-body text-[15px] font-bold text-primary">Sale Details</span>
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-body text-sm bg-accent/15 text-accent">
             <Lock size={12} /> {activeEvent.name}
           </span>
@@ -349,7 +243,8 @@ export default function NewSalePage() {
             </label>
             <input type="text" value={contract}
               onChange={e => { setContract(e.target.value); setAutoFilled(false); setHeaderErrors(h => ({ ...h, contract: false })); }}
-              className={inputCls('contract')} />
+              className={cn(inputCls('contract'), contractFlash && 'ring-2 ring-accent/60 bg-secondary/30')}
+              style={{ transition: 'all 0.3s ease' }} />
             {headerErrors.contract && <p className="font-body text-xs mt-1 text-destructive">Required</p>}
           </div>
           <div>
@@ -373,6 +268,7 @@ export default function NewSalePage() {
           <textarea value={notes} onChange={e => e.target.value.length <= 500 && setNotes(e.target.value)}
             rows={2} maxLength={500} placeholder="e.g. VIP client — priority allocation"
             className="w-full px-3 py-2.5 rounded-lg font-body text-sm border border-border outline-none focus:ring-1 focus:ring-accent bg-card resize-none" />
+          <p className="text-right font-body text-[11px] mt-1 text-muted-foreground">{notes.length} / 500</p>
         </div>
       </div>
 
@@ -381,10 +277,12 @@ export default function NewSalePage() {
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <h2 className="font-body text-base font-semibold text-foreground">Ticket Lines</h2>
-            <span className="px-2 py-0.5 rounded-full bg-muted font-body text-[11px] font-medium text-foreground">{lines.length} lines</span>
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 font-body text-[11px] font-medium text-primary">
+              {lines.length} line{lines.length > 1 ? 's' : ''}
+            </span>
           </div>
-          <button onClick={addLine}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-body text-xs font-medium bg-primary text-primary-foreground hover:opacity-90">
+          <button onClick={addLine} disabled={!matchId}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-body text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50">
             <Plus size={13} /> Add Line
           </button>
         </div>
@@ -398,6 +296,7 @@ export default function NewSalePage() {
                 exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
                 transition={{ duration: 0.2 }}>
                 <LineItemCard line={line} index={i} matchId={matchId}
+                  mode="SALE"
                   onUpdate={updateLine} onRemove={removeLine}
                   canRemove={lines.length > 1} errors={lineErrors} />
               </motion.div>
@@ -409,12 +308,22 @@ export default function NewSalePage() {
       {/* ── SALE SUMMARY FOOTER ── */}
       <div className="rounded-xl p-5 mb-4 bg-primary">
         <div className="flex items-center justify-between">
-          <span className="font-body text-sm text-primary-foreground/80">
-            {lines.length} lines · {totalQty} total tickets
-          </span>
-          <span className="font-body text-base font-bold text-primary-foreground">
-            Total Sale Value: {ctx.formatCurrency(totalValue)}
-          </span>
+          <div>
+            <p className="font-body text-sm text-primary-foreground/70">
+              {lines.length} line{lines.length > 1 ? 's' : ''} · {totalQty} total tickets
+            </p>
+            <p className="font-body text-xs text-primary-foreground/45 uppercase tracking-wider mt-1">Total Sale Value</p>
+            <p className="font-display text-[28px] text-accent mt-0.5">{ctx.formatCurrency(totalValue)}</p>
+          </div>
+          <button onClick={handleSubmit} disabled={loading}
+            className={cn(
+              "h-12 px-8 rounded-xl font-body text-[15px] font-semibold flex items-center gap-2 transition-all",
+              loading || !matchId || !clientId || !contract
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : "bg-gradient-to-r from-accent to-[hsl(40_55%_65%)] text-primary hover:-translate-y-0.5 hover:shadow-lg"
+            )}>
+            {loading ? <><Loader2 size={16} className="animate-spin" /> Saving sale...</> : 'Save Sale →'}
+          </button>
         </div>
         {oversellCount > 0 && (
           <div className="mt-3 rounded-lg p-3 bg-amber-500/20 border border-amber-400/40">
@@ -428,46 +337,10 @@ export default function NewSalePage() {
         )}
       </div>
 
-      {/* ── ACTIONS ── */}
-      {!success ? (
-        <div className="space-y-3">
-          <button onClick={handleSubmit} disabled={loading}
-            className="w-full h-12 rounded-xl font-body text-sm font-bold flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-70 bg-primary text-primary-foreground">
-            {loading ? <><Loader2 size={16} className="animate-spin" /> Saving sale...</> : 'Save Sale'}
-          </button>
-          <div className="text-center">
-            <button onClick={() => navigate('/sales')} className="font-body text-sm hover:underline text-muted-foreground">Cancel and go back</button>
-          </div>
-        </div>
-      ) : (
-        <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-          className="rounded-xl p-5 bg-card border border-emerald-300 shadow-sm">
-          <div className="flex items-start gap-3">
-            <CheckCircle size={20} className="text-emerald-600 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-body text-sm font-bold text-foreground">
-                SALE-003 created — {lines.length} lines · {totalQty} total tickets
-              </p>
-              <div className="mt-2 space-y-1">
-                {lines.map((l, i) => {
-                  const s = lineSummaries[i];
-                  return (
-                    <p key={l.id} className="font-body text-xs text-muted-foreground">
-                      Line {i + 1}: {s.catLabel || '—'} × {s.qty} — {s.isOversell
-                        ? <span className="text-amber-600 font-medium">PENDING APPROVAL ⚠</span>
-                        : <span className="text-emerald-600 font-medium">UNALLOCATED ✓</span>}
-                    </p>
-                  );
-                })}
-              </div>
-              <button onClick={() => navigate('/distribution')}
-                className="mt-3 px-4 py-2 rounded-lg font-body text-xs font-medium bg-primary text-primary-foreground hover:opacity-90">
-                Allocate Lines →
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+      {/* Cancel */}
+      <div className="text-center">
+        <button onClick={() => navigate('/sales')} className="font-body text-sm hover:underline text-muted-foreground">Cancel and go back</button>
+      </div>
     </div>
   );
 }
