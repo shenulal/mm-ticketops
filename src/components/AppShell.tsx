@@ -217,8 +217,8 @@ export default function AppShell() {
   const pageTitle = getPageTitle(location.pathname);
   
 
-  const isItemActive = (path: string, hasSubItems?: boolean) => {
-    if (hasSubItems) return location.pathname.startsWith(path);
+  const isItemActive = (path: string) => {
+    if (path === '/settings') return location.pathname.startsWith('/settings');
     return location.pathname === path;
   };
 
