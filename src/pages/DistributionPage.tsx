@@ -11,6 +11,7 @@ import { useContextHelpers } from '@/hooks/useContextHelpers';
 import { ChevronRight, X, Check, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import UpgradeModal from '@/components/UpgradeModal';
+import OversellResolutionDrawer from '@/components/OversellResolutionDrawer';
 
 type Tab = 'all' | 'unallocated' | 'allocated' | 'fulfilled';
 
@@ -116,6 +117,7 @@ export default function DistributionPage() {
   const [allocatedLineIds, setAllocatedLineIds] = useState<Set<string>>(new Set());
   const [allocateAllSale, setAllocateAllSale] = useState<string | null>(null);
   const [upgradeCtx, setUpgradeCtx] = useState<{ saleId: string; lineItem: SaleLineItem; lineIdx: number } | null>(null);
+  const [oversellCtx, setOversellCtx] = useState<{ saleId: string; lineItem: SaleLineItem; lineIdx: number } | null>(null);
 
   const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   const toggleLine = (id: string) => setExpandedLines(prev => ({ ...prev, [id]: !prev[id] }));
@@ -288,7 +290,7 @@ export default function DistributionPage() {
                             <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
                               <div className="flex gap-2">
                                 {isPending ? (
-                                  <button className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
+                                  <button onClick={() => setOversellCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx })} className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
                                 ) : li.status !== 'ALLOCATED' && li.status !== 'FULFILLED' ? (
                                   <button
                                     onClick={() => navigate(`/distribution/${s.id}/preview`)}
@@ -565,6 +567,13 @@ export default function DistributionPage() {
       <AnimatePresence>
         {upgradeCtx && <UpgradeModal saleId={upgradeCtx.saleId} line={upgradeCtx.lineItem} lineIdx={upgradeCtx.lineIdx}
           onClose={() => setUpgradeCtx(null)} onConfirm={() => setUpgradeCtx(null)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {oversellCtx && <OversellResolutionDrawer
+          saleId={oversellCtx.saleId} lineItem={oversellCtx.lineItem} lineIdx={oversellCtx.lineIdx}
+          onClose={() => setOversellCtx(null)}
+          onResolved={() => { setAllocatedLineIds(prev => new Set(prev).add(oversellCtx.lineItem.id)); setOversellCtx(null); }}
+        />}
       </AnimatePresence>
     </div>
   );

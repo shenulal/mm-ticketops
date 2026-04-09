@@ -12,6 +12,7 @@ import { useContextHelpers } from '@/hooks/useContextHelpers';
 import { AlertTriangle, ChevronRight, X, Lock, Plus, Trash2, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import UpgradeModal from '@/components/UpgradeModal';
+import OversellResolutionDrawer from '@/components/OversellResolutionDrawer';
 
 const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
   FULFILLED:        { label: 'FULFILLED',       cls: 'bg-success text-primary-foreground' },
@@ -463,6 +464,7 @@ export default function SalesPage() {
   const [lineCancelCtx, setLineCancelCtx] = useState<{ saleId: string; line: SaleLineItem; lineIdx: number } | null>(null);
   const [editSaleId, setEditSaleId] = useState<string | null>(null);
   const [upgradeCtx, setUpgradeCtx] = useState<{ saleId: string; line: SaleLineItem; lineIdx: number } | null>(null);
+  const [oversellCtx, setOversellCtx] = useState<{ saleId: string; line: SaleLineItem; lineIdx: number } | null>(null);
 
   const toggleExpand = (id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -610,7 +612,7 @@ export default function SalesPage() {
                             <div className="flex gap-2">
                               {li.status === 'PENDING_APPROVAL' && isOversell ? (
                                 <>
-                                  <button onClick={() => setModalCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
+                                  <button onClick={() => setOversellCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
                                   <button onClick={() => setUpgradeCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Change Category</button>
                                 </>
                               ) : (
@@ -655,6 +657,13 @@ export default function SalesPage() {
       <AnimatePresence>
         {upgradeCtx && <UpgradeModal saleId={upgradeCtx.saleId} line={upgradeCtx.line} lineIdx={upgradeCtx.lineIdx}
           onClose={() => setUpgradeCtx(null)} onConfirm={() => setUpgradeCtx(null)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {oversellCtx && <OversellResolutionDrawer
+          saleId={oversellCtx.saleId} lineItem={oversellCtx.line} lineIdx={oversellCtx.lineIdx}
+          onClose={() => setOversellCtx(null)}
+          onResolved={() => { setApprovedLines(prev => new Set(prev).add(oversellCtx.line.id)); setOversellCtx(null); }}
+        />}
       </AnimatePresence>
     </div>
   );
