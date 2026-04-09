@@ -447,6 +447,7 @@ function getSubGameName(sgId: string) { return MOCK_SUBGAMES.find(sg => sg.id ==
 /* ── Main Page ── */
 export default function PurchasesPage() {
   const navigate = useNavigate();
+  const { eventMatches, eventVendors, activeEvent, ctx } = useContextHelpers();
   const [matchFilter, setMatchFilter] = useState('all');
   const [catFilter, setCatFilter] = useState('all');
   const [vendorFilter, setVendorFilter] = useState('all');
@@ -493,18 +494,18 @@ export default function PurchasesPage() {
       </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
-        <select className={selectClass} disabled><option>FIFA WC 2026</option></select>
+        <select className={selectClass} disabled><option>{activeEvent.name}</option></select>
         <select className={selectClass} value={matchFilter} onChange={e => setMatchFilter(e.target.value)}>
           <option value="all">All Matches</option>
-          {MOCK_MATCHES.map(m => <option key={m.id} value={m.code}>{m.code} — {m.teams}</option>)}
+          {eventMatches.map(m => <option key={m.id} value={m.code}>{m.code} — {m.teamsOrDescription}</option>)}
         </select>
         <select className={selectClass} value={catFilter} onChange={e => setCatFilter(e.target.value)}>
           <option value="all">All Categories</option>
-          <option>Top Cat 1</option><option>Cat 2</option><option>Cat 3</option><option>Cat 4</option>
-          <option>Grandstand A</option><option>Paddock Club</option>
+          {ctx.subGames.flatMap(sg => sg.categories).filter((c, i, a) => a.findIndex(x => x.displayName === c.displayName) === i).map(c => <option key={c.id} value={c.displayName}>{c.displayName}</option>)}
         </select>
         <select className={selectClass} value={vendorFilter} onChange={e => setVendorFilter(e.target.value)}>
-          <option value="all">All Vendors</option><option>poxami</option><option>viagogo</option>
+          <option value="all">All Vendors</option>
+          {eventVendors.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
         </select>
       </div>
 
