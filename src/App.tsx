@@ -37,6 +37,7 @@ import CurrenciesPage from "@/pages/masters/CurrenciesPage";
 // Administration
 import UsersPage from "@/pages/UsersPage";
 import SettingsPage from "@/pages/SettingsPage";
+import VendorCredentialsPage from "@/pages/VendorCredentialsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 const queryClient = new QueryClient();
@@ -146,6 +147,9 @@ const App = () => (
                 } />
                 <Route path="/admin/notifications" element={
                   <RoleProtectedRoute allowedRoles={ADMIN_ROLES}><UsersPage /></RoleProtectedRoute>
+                } />
+                <Route path="/admin/vendor-credentials" element={
+                  <RoleProtectedRoute allowedRoles={FULFILMENT_ROLES}><VendorCredentialsPage /></RoleProtectedRoute>
                 } />
 
                 {/* SETTINGS */}

@@ -65,6 +65,18 @@ export interface Contract {
   documentUrl: string;
 }
 
+export interface VendorCredential {
+  id: string; vendorId: string; eventId: string | null;
+  loginId: string; email: string; passwordHash: string;
+  active: boolean; notes: string;
+  updatedBy: string; updatedAt: string; createdAt: string;
+}
+
+export interface CredentialHistoryEntry {
+  id: string; credentialId: string; action: 'CREATED' | 'UPDATED' | 'DEACTIVATED' | 'PASSWORD_VIEWED';
+  actor: string; timestamp: string; details: string;
+}
+
 export interface NotificationTemplate {
   id: string; triggerEvent: string; label: string;
   subjectTemplate: string; bodyTemplate: string;
@@ -164,6 +176,22 @@ const INITIAL_CONTRACTS: Contract[] = [
 const INITIAL_VENDOR_EVENT_BRIDGES: VendorEventBridge[] = [
   { id: 'veb1', vendorId: 'vnd1', eventId: 'evt1', platformUrl: 'https://poxami.com/wc2026', loginEmail: 'clara@cc.WC#20', credentialHint: 'FIFA vendor portal', primaryContactForEvent: 'Clara Dufresne', notes: '', isActive: true },
   { id: 'veb2', vendorId: 'vnd2', eventId: 'evt2', platformUrl: 'https://viagogo.com/f1sgp', loginEmail: 'j.meester@viagogo.com', credentialHint: 'F1 vendor login', primaryContactForEvent: 'J. Meester', notes: '', isActive: true },
+];
+
+const INITIAL_VENDOR_CREDENTIALS: VendorCredential[] = [
+  { id: 'vc1', vendorId: 'vnd1', eventId: 'evt1', loginId: 'clara.wc2026', email: 'clara@poxami.com', passwordHash: 'P@ssw0rd!2026', active: true, notes: 'FIFA WC 2026 portal', updatedBy: 'Alex Thompson', updatedAt: '2026-03-15T10:30:00Z', createdAt: '2026-01-10T09:00:00Z' },
+  { id: 'vc2', vendorId: 'vnd1', eventId: null, loginId: 'poxami.global', email: 'ops@poxami.com', passwordHash: 'Gl0b@lAcc#99', active: true, notes: 'Global account for all events', updatedBy: 'Alex Thompson', updatedAt: '2026-02-20T14:00:00Z', createdAt: '2025-11-01T08:00:00Z' },
+  { id: 'vc3', vendorId: 'vnd2', eventId: 'evt2', loginId: 'viagogo.f1sgp', email: 'j.meester@viagogo.com', passwordHash: 'F1Sgp#2026!', active: true, notes: 'F1 Singapore GP credentials', updatedBy: 'Sara Chen', updatedAt: '2026-04-01T11:00:00Z', createdAt: '2026-03-01T10:00:00Z' },
+  { id: 'vc4', vendorId: 'vnd3', eventId: 'evt1', loginId: 'stubhub.fifa', email: 'accounts@stubhub.com', passwordHash: 'StUb#Fifa26', active: false, notes: 'Deactivated — contract ended', updatedBy: 'Sara Chen', updatedAt: '2026-03-30T16:00:00Z', createdAt: '2025-12-15T09:00:00Z' },
+];
+
+const INITIAL_CREDENTIAL_HISTORY: CredentialHistoryEntry[] = [
+  { id: 'ch1', credentialId: 'vc1', action: 'CREATED', actor: 'Alex Thompson', timestamp: '2026-01-10T09:00:00Z', details: 'Credential created for FIFA WC 2026' },
+  { id: 'ch2', credentialId: 'vc1', action: 'UPDATED', actor: 'Alex Thompson', timestamp: '2026-03-15T10:30:00Z', details: 'Password updated' },
+  { id: 'ch3', credentialId: 'vc2', action: 'CREATED', actor: 'Alex Thompson', timestamp: '2025-11-01T08:00:00Z', details: 'Global credential created' },
+  { id: 'ch4', credentialId: 'vc3', action: 'CREATED', actor: 'Sara Chen', timestamp: '2026-03-01T10:00:00Z', details: 'F1 Singapore credential created' },
+  { id: 'ch5', credentialId: 'vc4', action: 'CREATED', actor: 'Sara Chen', timestamp: '2025-12-15T09:00:00Z', details: 'StubHub FIFA credential created' },
+  { id: 'ch6', credentialId: 'vc4', action: 'DEACTIVATED', actor: 'Sara Chen', timestamp: '2026-03-30T16:00:00Z', details: 'Contract ended — credential deactivated' },
 ];
 
 const INITIAL_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
@@ -276,6 +304,8 @@ interface AppContextType {
   contracts: Contract[];
   notificationTemplates: NotificationTemplate[];
   events: EventDef[];
+  vendorCredentials: VendorCredential[];
+  credentialHistory: CredentialHistoryEntry[];
 
   // Derived flat arrays (backward-compat with old MOCK_MATCHES / MOCK_SUBGAMES)
   matches: MatchDef[];
@@ -323,6 +353,12 @@ interface AppContextType {
   updateCategory(subGameId: string, categoryId: string, data: Partial<SubGameCategory>): void;
   updateNotificationTemplate(id: string, data: Partial<NotificationTemplate>): void;
   setVendorEventBridge(bridge: VendorEventBridge): void;
+  addVendorCredential(cred: Omit<VendorCredential, 'id'>): void;
+  updateVendorCredential(id: string, data: Partial<VendorCredential>): void;
+  addCredentialHistoryEntry(entry: Omit<CredentialHistoryEntry, 'id'>): void;
+  getCredentialsForVendor(vendorId: string): VendorCredential[];
+  getCredentialHistory(credentialId: string): CredentialHistoryEntry[];
+  getBestCredential(vendorId: string, eventId: string): VendorCredential | undefined;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -343,6 +379,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [contracts, setContracts] = useState<Contract[]>(INITIAL_CONTRACTS);
   const [notificationTemplates, setNotificationTemplates] = useState<NotificationTemplate[]>(INITIAL_NOTIFICATION_TEMPLATES);
   const [events, setEvents] = useState<EventDef[]>(INITIAL_EVENTS);
+  const [vendorCredentials, setVendorCredentials] = useState<VendorCredential[]>(INITIAL_VENDOR_CREDENTIALS);
+  const [credentialHistory, setCredentialHistory] = useState<CredentialHistoryEntry[]>(INITIAL_CREDENTIAL_HISTORY);
 
   // Derived flat arrays
   const matches = useMemo(() => events.flatMap(e => e.matches), [events]);
@@ -461,9 +499,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return idx >= 0 ? prev.map((b, i) => i === idx ? bridge : b) : [...prev, bridge];
     }), []);
 
+  // ── Credential mutators & helpers ──
+  const addVendorCredential = useCallback((cred: Omit<VendorCredential, 'id'>) => {
+    const id = uid();
+    setVendorCredentials(prev => [...prev, { ...cred, id }]);
+    setCredentialHistory(prev => [...prev, { id: uid(), credentialId: id, action: 'CREATED', actor: cred.updatedBy, timestamp: new Date().toISOString(), details: 'Credential created' }]);
+  }, []);
+  const updateVendorCredential = useCallback((id: string, data: Partial<VendorCredential>) => {
+    setVendorCredentials(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
+  }, []);
+  const addCredentialHistoryEntry = useCallback((entry: Omit<CredentialHistoryEntry, 'id'>) => {
+    setCredentialHistory(prev => [...prev, { ...entry, id: uid() }]);
+  }, []);
+  const getCredentialsForVendor = useCallback((vendorId: string) =>
+    vendorCredentials.filter(c => c.vendorId === vendorId), [vendorCredentials]);
+  const getCredentialHistory = useCallback((credentialId: string) =>
+    credentialHistory.filter(h => h.credentialId === credentialId).sort((a, b) => b.timestamp.localeCompare(a.timestamp)), [credentialHistory]);
+  const getBestCredential = useCallback((vendorId: string, eventId: string) => {
+    const creds = vendorCredentials.filter(c => c.vendorId === vendorId && c.active);
+    return creds.find(c => c.eventId === eventId) ?? creds.find(c => c.eventId === null);
+  }, [vendorCredentials]);
+
   const value = useMemo<AppContextType>(() => ({
     organisation, settings, currencies, venues, vendors, vendorEventBridges,
     clients, contracts, notificationTemplates, events, matches, subGames,
+    vendorCredentials, credentialHistory,
     getEvent, getMatch, getSubGame, getSubGamesForMatch, hasMultipleSubGames,
     getCategoriesForSubGame, getHierarchyForSubGame, getMatchesForEvent,
     getVendor, getClient, getContract, getVenue, getCurrency, formatCurrency,
@@ -475,9 +535,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addEvent, updateEvent, addMatchToEvent, updateMatch,
     addSubGameToMatch, updateSubGame, addCategoryToSubGame, updateCategory,
     updateNotificationTemplate, setVendorEventBridge,
+    addVendorCredential, updateVendorCredential, addCredentialHistoryEntry,
+    getCredentialsForVendor, getCredentialHistory, getBestCredential,
   }), [
     organisation, settings, currencies, venues, vendors, vendorEventBridges,
     clients, contracts, notificationTemplates, events, matches, subGames,
+    vendorCredentials, credentialHistory,
     getEvent, getMatch, getSubGame, getSubGamesForMatch, hasMultipleSubGames,
     getCategoriesForSubGame, getHierarchyForSubGame, getMatchesForEvent,
     getVendor, getClient, getContract, getVenue, getCurrency, formatCurrency,
@@ -489,6 +552,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addEvent, updateEvent, addMatchToEvent, updateMatch,
     addSubGameToMatch, updateSubGame, addCategoryToSubGame, updateCategory,
     updateNotificationTemplate, setVendorEventBridge,
+    addVendorCredential, updateVendorCredential, addCredentialHistoryEntry,
+    getCredentialsForVendor, getCredentialHistory, getBestCredential,
   ]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
