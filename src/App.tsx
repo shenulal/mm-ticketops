@@ -23,6 +23,8 @@ import UsersPage from "@/pages/UsersPage";
 import EventsPage from "@/pages/EventsPage";
 import EventDetailPage from "@/pages/EventDetailPage";
 import SettingsPage from "@/pages/SettingsPage";
+import MasterDataPage from "@/pages/MasterDataPage";
+import AdminPage from "@/pages/AdminPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,7 +60,11 @@ const App = () => (
                 <Route path="/staff-queue" element={<StaffQueuePage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/users" element={<UsersPage />} />
+                <Route path="/masters/:entity" element={<MasterDataPage />} />
+                <Route path="/admin/:section" element={<AdminPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/settings/:section" element={<SettingsPage />} />
+                <Route path="/supplier-portals" element={<DistributionPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
