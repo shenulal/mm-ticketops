@@ -4,6 +4,7 @@ import MasterPage, { FieldRow, SectionHeading, StatusBadge, TypeBadge, FormField
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, AlertTriangle, ExternalLink, Trash2, Pencil } from 'lucide-react';
 import { MOCK_PURCHASES } from '@/data/mockData';
+import { VendorCredentialsTab } from '@/pages/VendorCredentialsPage';
 
 const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   MARKETPLACE: { bg: 'bg-accent/20', text: 'text-accent-foreground' },
