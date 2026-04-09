@@ -2,12 +2,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
   AlertTriangle, Clock, Send, Eye, ShieldAlert, KeyRound,
-  ChevronRight, CheckCircle,
+  ChevronRight, CheckCircle, Zap, ShieldOff, PauseCircle,
 } from 'lucide-react';
 import {
   MOCK_SALE_LINE_ITEMS, MOCK_DIST_ROWS, MOCK_STAFF_TASKS, MOCK_SALES,
   getDispatchUrgency, getPortalFunnel,
 } from '@/data/mockData';
+import { MOCK_ALLOCATION_RUNS, MOCK_RUN_ITEMS } from '@/data/allocationData';
 import { CHART_COLORS } from './chartHelpers';
 import type { UserRole } from '@/data/mockData';
 
@@ -117,6 +118,40 @@ function getActionItems(): ActionItem[] {
       severity: 'info',
       cta: 'Open Vault',
       route: '/vendor-credentials',
+      roles: ['super_admin', 'ops_manager', 'sr_operator'],
+    });
+  }
+
+  // Auto-allocation cards
+  const todayRuns = MOCK_ALLOCATION_RUNS.filter(r => r.status === 'COMPLETED' && !r.dryRun);
+  const autoCommitted = todayRuns.reduce((s, r) => s + r.summary.committed, 0);
+  const autoMarginDelta = todayRuns.reduce((s, r) => s + r.summary.marginDelta, 0);
+  const blockedByPolicy = MOCK_RUN_ITEMS.filter(ri => ri.status === 'BLOCKED_BY_POLICY');
+
+  if (autoCommitted > 0) {
+    items.push({
+      id: 'auto-committed',
+      icon: Zap,
+      title: `${autoCommitted} sale${autoCommitted > 1 ? 's' : ''} auto-allocated today — AED ${autoMarginDelta.toLocaleString()} margin`,
+      subtitle: `${todayRuns.length} run${todayRuns.length > 1 ? 's' : ''} completed`,
+      count: autoCommitted,
+      severity: 'info',
+      cta: 'View Runs',
+      route: '/distribution/auto-allocate',
+      roles: ['super_admin', 'ops_manager', 'sr_operator', 'operator'],
+    });
+  }
+
+  if (blockedByPolicy.length > 0) {
+    items.push({
+      id: 'blocked-policy',
+      icon: ShieldOff,
+      title: `${blockedByPolicy.length} sale${blockedByPolicy.length > 1 ? 's' : ''} blocked by policy`,
+      subtitle: blockedByPolicy.map(ri => ri.reason.split(';')[0]).slice(0, 2).join(', '),
+      count: blockedByPolicy.length,
+      severity: 'warning',
+      cta: 'Review Blocked',
+      route: '/distribution/auto-allocate',
       roles: ['super_admin', 'ops_manager', 'sr_operator'],
     });
   }
