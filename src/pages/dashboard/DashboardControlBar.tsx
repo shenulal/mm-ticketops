@@ -6,7 +6,7 @@ export interface DashboardFilters {
   eventId: string;
   matchId: string;
   subGameId: string;
-  dateRange: 'last7' | 'last30' | 'alltime' | 'custom';
+  dateRange: 'last7' | 'last30' | 'alltime' | 'this_event' | 'custom';
   viewMode: 'overview' | 'deepdive';
   currency: 'AED' | 'USD';
 }
@@ -40,6 +40,7 @@ export default function DashboardControlBar({ filters, onChange, showEventSelect
     { key: 'last7', label: 'Last 7d' },
     { key: 'last30', label: '30d' },
     { key: 'alltime', label: 'All time' },
+    { key: 'this_event', label: 'This event' },
   ];
 
   return (
