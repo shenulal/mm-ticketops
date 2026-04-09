@@ -15,6 +15,8 @@ import NewSalePage from "@/pages/NewSalePage";
 import DistributionPage from "@/pages/DistributionPage";
 import ClientPortalPage from "@/pages/ClientPortalPage";
 import StaffQueuePage from "@/pages/StaffQueuePage";
+import SupplierPortalPage from "@/pages/SupplierPortalPage";
+import ReportsPage from "@/pages/ReportsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
