@@ -7,9 +7,11 @@ import {
   getInventoryAvailable,
   type SaleLineItem, type PurchaseUnit,
 } from '@/data/mockData';
+import { suggestPlans, scorePlan, type CandidatePlan, type SetCountEntry } from '@/lib/allocationEngine';
+import { DEFAULT_SCORING_WEIGHTS } from '@/data/allocationData';
 import {
   ChevronRight, AlertTriangle, CheckCircle, Loader2, ArrowUpRight,
-  ArrowDownRight, Package, ShieldAlert, Info, Layers,
+  ArrowDownRight, Package, ShieldAlert, Info, Layers, Zap,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -62,77 +64,46 @@ function formatCurrency(v: number) {
   return v.toLocaleString('en-AE', { minimumFractionDigits: 0 });
 }
 
-/** Generate mock allocation plans for a line */
-function generatePlans(subGameId: string, categoryId: string, qty: number): AllocationPlan[] {
+/** Generate allocation plans using the ported suggestPlans engine */
+function generatePlans(subGameId: string, categoryId: string, qty: number, unitPrice: number): AllocationPlan[] {
   const available = MOCK_UNITS.filter(
     u => u.subGameId === subGameId && u.categoryId === categoryId && u.status === 'AVAILABLE'
   );
   if (available.length === 0) return [];
 
-  // group by setId
+  // Group by setId → build SetCountEntry[]
   const setGroups: Record<string, PurchaseUnit[]> = {};
   available.forEach(u => {
     (setGroups[u.setId] = setGroups[u.setId] || []).push(u);
   });
 
-  const plans: AllocationPlan[] = [];
-  const setEntries = Object.entries(setGroups);
+  const setCounts: SetCountEntry[] = Object.entries(setGroups).map(([setId, units]) => ({
+    setId,
+    count: units.length,
+    vendor: units[0].vendor,
+    unitCost: 27525, // mock unit cost from purchase line
+  }));
 
-  // Plan A: best fit — try to fill from fewest sets
-  const bestChunks: PlanChunk[] = [];
-  let left = qty;
-  for (const [setId, units] of setEntries) {
-    if (left <= 0) break;
-    const take = Math.min(left, units.length);
-    bestChunks.push({ setId, qty: take, vendor: units[0].vendor });
-    left -= take;
-  }
-  const bestTotal = qty - left;
-  plans.push({
-    id: 'plan-best',
-    chunks: bestChunks,
-    total: bestTotal,
-    vendorMix: [...new Set(bestChunks.map(c => c.vendor))],
-    marginDelta: 0,
-    note: bestTotal >= qty ? 'Full coverage — fewest sets' : `Partial: covers ${bestTotal} of ${qty}`,
+  // Use the ported suggestPlans algorithm
+  const candidates = suggestPlans(setCounts, qty, 6);
+
+  // Score each plan
+  candidates.forEach(plan => {
+    scorePlan(plan, qty, unitPrice, DEFAULT_SCORING_WEIGHTS);
   });
 
-  // Plan B: reverse order (different vendor first if available)
-  if (setEntries.length > 1) {
-    const revChunks: PlanChunk[] = [];
-    let left2 = qty;
-    for (const [setId, units] of [...setEntries].reverse()) {
-      if (left2 <= 0) break;
-      const take = Math.min(left2, units.length);
-      revChunks.push({ setId, qty: take, vendor: units[0].vendor });
-      left2 -= take;
-    }
-    plans.push({
-      id: 'plan-alt-1',
-      chunks: revChunks,
-      total: qty - left2,
-      vendorMix: [...new Set(revChunks.map(c => c.vendor))],
-      marginDelta: -50,
-      note: 'Alternative vendor ordering',
-    });
-  }
+  // Sort by score descending
+  candidates.sort((a, b) => b.score - a.score);
 
-  // Plan C: single-set only (if one set has enough)
-  for (const [setId, units] of setEntries) {
-    if (units.length >= qty) {
-      plans.push({
-        id: `plan-single-${setId}`,
-        chunks: [{ setId, qty, vendor: units[0].vendor }],
-        total: qty,
-        vendorMix: [units[0].vendor],
-        marginDelta: 20,
-        note: `Single set ${setId} — clean block`,
-      });
-      break;
-    }
-  }
-
-  return plans;
+  // Map to legacy AllocationPlan format
+  return candidates.map(c => ({
+    id: c.id,
+    chunks: c.chunks.map(ch => ({ setId: ch.setId, qty: ch.qty, vendor: ch.vendor })),
+    total: c.total,
+    vendorMix: c.vendorMix,
+    marginDelta: c.marginDelta,
+    note: `${c.strategy} — score ${c.score.toFixed(3)}`,
+  }));
 }
 
 // ── Status Badges ──
@@ -164,7 +135,7 @@ export default function AllocationPreviewPage() {
   const [linePlans, setLinePlans] = useState<LinePlanState[]>(() => {
     if (!sale) return [];
     return sale.lines.map(li => {
-      const plans = generatePlans(li.subGameId, li.categoryId, li.qty);
+      const plans = generatePlans(li.subGameId, li.categoryId, li.qty, li.unitPrice);
       const bestPlan = plans[0];
       return {
         lineId: li.id,
@@ -205,7 +176,7 @@ export default function AllocationPreviewPage() {
 
     const soldLevel = getCatLevel(li.subGameId, li.categoryId);
     const newLevel = getCatLevel(li.subGameId, newCatId);
-    const plans = generatePlans(li.subGameId, newCatId, li.qty);
+    const plans = generatePlans(li.subGameId, newCatId, li.qty, li.unitPrice);
     const bestPlan = plans[0];
 
     setLinePlans(prev => prev.map((lp, i) => i !== lineIdx ? lp : {
