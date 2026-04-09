@@ -45,6 +45,8 @@ import CurrenciesPage from "@/pages/masters/CurrenciesPage";
 import UsersPage from "@/pages/UsersPage";
 import SettingsPage from "@/pages/SettingsPage";
 import VendorCredentialsPage from "@/pages/VendorCredentialsPage";
+import AuditLogPage from "@/pages/AuditLogPage";
+import ReconciliationPage from "@/pages/ReconciliationPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 const queryClient = new QueryClient();
@@ -164,6 +166,12 @@ const App = () => (
                 } />
                 <Route path="/admin/vendor-credentials" element={
                   <RoleProtectedRoute allowedRoles={FULFILMENT_ROLES}><VendorCredentialsPage /></RoleProtectedRoute>
+                } />
+                <Route path="/admin/audit-log" element={
+                  <RoleProtectedRoute allowedRoles={SETTINGS_ROLES}><AuditLogPage /></RoleProtectedRoute>
+                } />
+                <Route path="/admin/reconciliation" element={
+                  <RoleProtectedRoute allowedRoles={['super_admin', 'ops_manager']}><ReconciliationPage /></RoleProtectedRoute>
                 } />
 
                 {/* SETTINGS */}

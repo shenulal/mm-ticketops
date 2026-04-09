@@ -12,7 +12,7 @@ import {
   LayoutDashboard, Calendar, ShoppingCart, PlusCircle, TrendingUp,
   GitBranch, Users, ExternalLink, BarChart3, Truck, Building2,
   FileText, MapPin, DollarSign, UserCog, Bell, Settings, Key,
-  ChevronDown, ChevronRight, LogOut, Menu, X,
+  ChevronDown, ChevronRight, LogOut, Menu, X, Shield, ClipboardCheck,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -21,6 +21,7 @@ const ICONS: Record<string, LucideIcon> = {
   LayoutDashboard, Calendar, ShoppingCart, PlusCircle, TrendingUp,
   GitBranch, Users, ExternalLink, BarChart3, Truck, Building2,
   FileText, MapPin, DollarSign, UserCog, Bell, Settings, Key,
+  Shield, ClipboardCheck,
 };
 
 // ─── Types ─────────────────────────────────────────────
@@ -124,6 +125,10 @@ const NAV_GROUPS: NavGroup[] = [
         roles: ['super_admin', 'event_admin'] },
       { id: 'vendor-credentials', label: 'Vendor Credentials', icon: 'Key', path: '/admin/vendor-credentials',
         roles: ['super_admin', 'event_admin', 'ops_manager', 'sr_operator'] },
+      { id: 'audit-log', label: 'Audit Log', icon: 'Shield', path: '/admin/audit-log',
+        roles: ['super_admin'] },
+      { id: 'reconciliation', label: 'Reconciliation', icon: 'ClipboardCheck', path: '/admin/reconciliation',
+        roles: ['super_admin', 'ops_manager'] },
       { id: 'settings', label: 'Settings', icon: 'Settings', path: '/settings',
         roles: ['super_admin'] },
     ],
