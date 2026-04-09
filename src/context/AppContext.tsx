@@ -78,11 +78,45 @@ export interface CredentialHistoryEntry {
   actor: string; timestamp: string; details: string;
 }
 
+export type NotificationChannel = 'email' | 'whatsapp' | 'slack' | 'in_app';
+
 export interface NotificationTemplate {
-  id: string; triggerEvent: string; label: string;
-  subjectTemplate: string; bodyTemplate: string;
-  channels: ('EMAIL' | 'IN_APP')[]; recipientRoles: string[];
-  isActive: boolean;
+  id: string; code: string; name: string;
+  channels: NotificationChannel[];
+  subject: string; bodyMarkdown: string;
+  variables: Record<string, string>; // variable name → description
+  active: boolean;
+  // Legacy compat
+  triggerEvent?: string; label?: string;
+  subjectTemplate?: string; bodyTemplate?: string;
+  recipientRoles?: string[]; isActive?: boolean;
+}
+
+export type NotificationEventType =
+  | 'oversell.raised' | 'oversell.resolved'
+  | 'sale.created' | 'sale.unallocated_72h'
+  | 'allocation.committed' | 'allocation.upgrade_approved'
+  | 'portal.generated' | 'portal.fully_submitted'
+  | 'dispatch.ticket_unsent_T_minus_65d' | 'dispatch.issue_raised' | 'sale.fully_dispatched'
+  | 'credential.updated'
+  | 'event.transition';
+
+export interface NotificationTrigger {
+  id: string; templateId: string;
+  eventType: NotificationEventType;
+  conditions: Record<string, any>; // e.g. { "sale.totalValue": { ">": 100000 } }
+  recipients: string; // expression e.g. "sale.assigned_operator", "role:ops_manager"
+  active: boolean;
+}
+
+export type NotificationLogStatus = 'queued' | 'sent' | 'failed';
+
+export interface NotificationLogEntry {
+  id: string; templateId: string; triggerId: string;
+  eventType: string; payload: Record<string, any>;
+  recipients: string[]; channel: NotificationChannel;
+  sentAt: string; status: NotificationLogStatus;
+  error?: string; retryCount: number;
 }
 
 export interface SubGameCategory {
