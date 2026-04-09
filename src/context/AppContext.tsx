@@ -499,9 +499,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return idx >= 0 ? prev.map((b, i) => i === idx ? bridge : b) : [...prev, bridge];
     }), []);
 
+  // ── Credential mutators & helpers ──
+  const addVendorCredential = useCallback((cred: Omit<VendorCredential, 'id'>) => {
+    const id = uid();
+    setVendorCredentials(prev => [...prev, { ...cred, id }]);
+    setCredentialHistory(prev => [...prev, { id: uid(), credentialId: id, action: 'CREATED', actor: cred.updatedBy, timestamp: new Date().toISOString(), details: 'Credential created' }]);
+  }, []);
+  const updateVendorCredential = useCallback((id: string, data: Partial<VendorCredential>) => {
+    setVendorCredentials(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
+  }, []);
+  const addCredentialHistoryEntry = useCallback((entry: Omit<CredentialHistoryEntry, 'id'>) => {
+    setCredentialHistory(prev => [...prev, { ...entry, id: uid() }]);
+  }, []);
+  const getCredentialsForVendor = useCallback((vendorId: string) =>
+    vendorCredentials.filter(c => c.vendorId === vendorId), [vendorCredentials]);
+  const getCredentialHistory = useCallback((credentialId: string) =>
+    credentialHistory.filter(h => h.credentialId === credentialId).sort((a, b) => b.timestamp.localeCompare(a.timestamp)), [credentialHistory]);
+  const getBestCredential = useCallback((vendorId: string, eventId: string) => {
+    const creds = vendorCredentials.filter(c => c.vendorId === vendorId && c.active);
+    return creds.find(c => c.eventId === eventId) ?? creds.find(c => c.eventId === null);
+  }, [vendorCredentials]);
+
   const value = useMemo<AppContextType>(() => ({
     organisation, settings, currencies, venues, vendors, vendorEventBridges,
     clients, contracts, notificationTemplates, events, matches, subGames,
+    vendorCredentials, credentialHistory,
     getEvent, getMatch, getSubGame, getSubGamesForMatch, hasMultipleSubGames,
     getCategoriesForSubGame, getHierarchyForSubGame, getMatchesForEvent,
     getVendor, getClient, getContract, getVenue, getCurrency, formatCurrency,
@@ -513,9 +535,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addEvent, updateEvent, addMatchToEvent, updateMatch,
     addSubGameToMatch, updateSubGame, addCategoryToSubGame, updateCategory,
     updateNotificationTemplate, setVendorEventBridge,
+    addVendorCredential, updateVendorCredential, addCredentialHistoryEntry,
+    getCredentialsForVendor, getCredentialHistory, getBestCredential,
   }), [
     organisation, settings, currencies, venues, vendors, vendorEventBridges,
     clients, contracts, notificationTemplates, events, matches, subGames,
+    vendorCredentials, credentialHistory,
     getEvent, getMatch, getSubGame, getSubGamesForMatch, hasMultipleSubGames,
     getCategoriesForSubGame, getHierarchyForSubGame, getMatchesForEvent,
     getVendor, getClient, getContract, getVenue, getCurrency, formatCurrency,
@@ -527,6 +552,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addEvent, updateEvent, addMatchToEvent, updateMatch,
     addSubGameToMatch, updateSubGame, addCategoryToSubGame, updateCategory,
     updateNotificationTemplate, setVendorEventBridge,
+    addVendorCredential, updateVendorCredential, addCredentialHistoryEntry,
+    getCredentialsForVendor, getCredentialHistory, getBestCredential,
   ]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
