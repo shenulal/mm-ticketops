@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
 import { Lock, CheckCircle, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import {
-  MOCK_SALES, MOCK_DIST_ROWS,
+  MOCK_SALES, MOCK_MATCHES, MOCK_SUBGAMES, MOCK_DIST_ROWS,
+  getSubGamesForMatch, hasMultipleSubGames,
   type SaleLineItem, type DistRow,
 } from '@/data/mockData';
 

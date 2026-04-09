@@ -4,10 +4,11 @@ import RoleGuard from '@/components/RoleGuard';
 import { useAppContext } from '@/context/AppContext';
 import { useEvent } from '@/context/EventContext';
 import {
-  MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_UNITS, MOCK_DIST_ROWS,
-  getInventoryAvailable,
+  MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_MATCHES, MOCK_SUBGAMES, MOCK_UNITS, MOCK_DIST_ROWS,
+  getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable,
   type SaleLineItem,
 } from '@/data/mockData';
+import { useContextHelpers } from '@/hooks/useContextHelpers';
 import { AlertTriangle, ChevronRight, X, Lock, Plus, Trash2, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import UpgradeModal from '@/components/UpgradeModal';

@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import {
-  MOCK_UNITS, MOCK_SALES,
-  getInventoryAvailable,
+  MOCK_SUBGAMES, MOCK_UNITS, MOCK_MATCHES, MOCK_SALES,
+  getHierarchyForSubGame, getInventoryAvailable, getSubGamesForMatch,
   type SaleLineItem, type Category,
 } from '@/data/mockData';
 import { X, ArrowUp, ArrowDown, AlertTriangle, Info, CheckCircle, Loader2 } from 'lucide-react';

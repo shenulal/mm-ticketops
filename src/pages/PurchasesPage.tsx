@@ -5,9 +5,11 @@ import { useAppContext } from '@/context/AppContext';
 import { useEvent } from '@/context/EventContext';
 import RoleGuard from '@/components/RoleGuard';
 import {
-  MOCK_PURCHASES, MOCK_UNITS, MOCK_PURCHASE_LINE_ITEMS,
+  MOCK_PURCHASES, MOCK_UNITS, MOCK_PURCHASE_LINE_ITEMS, MOCK_MATCHES, MOCK_SUBGAMES,
+  hasMultipleSubGames, getSubGamesForMatch,
   type PurchaseLineItem,
 } from '@/data/mockData';
+import { useContextHelpers } from '@/hooks/useContextHelpers';
 import { ChevronRight, X, Lock, AlertTriangle, Plus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

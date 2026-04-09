@@ -2,10 +2,11 @@ import React, { useState, useMemo, Fragment } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import { useEvent } from '@/context/EventContext';
 import {
-  MOCK_SALES, MOCK_DIST_ROWS, MOCK_UNITS,
-  getInventoryAvailable,
+  MOCK_SALES, MOCK_MATCHES, MOCK_DIST_ROWS, MOCK_UNITS, MOCK_SUBGAMES,
+  getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable,
   type SaleLineItem, type DistRow,
 } from '@/data/mockData';
+import { useContextHelpers } from '@/hooks/useContextHelpers';
 import { ChevronRight, X, Check, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import UpgradeModal from '@/components/UpgradeModal';
