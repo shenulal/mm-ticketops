@@ -562,6 +562,10 @@ export default function DistributionPage() {
           );
         })()}
       </AnimatePresence>
+      <AnimatePresence>
+        {upgradeCtx && <UpgradeModal saleId={upgradeCtx.saleId} line={upgradeCtx.lineItem} lineIdx={upgradeCtx.lineIdx}
+          onClose={() => setUpgradeCtx(null)} onConfirm={() => setUpgradeCtx(null)} />}
+      </AnimatePresence>
     </div>
   );
 }
