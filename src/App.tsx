@@ -29,7 +29,7 @@ const App = () => (
 
             {/* App shell routes */}
             <Route element={<AppShell />}>
-              <Route path="/dashboard" element={<PlaceholderPage title="Dashboard" />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/events" element={<PlaceholderPage title="Events" />} />
               <Route path="/events/:id" element={<PlaceholderPage title="Event Detail" />} />
               <Route path="/purchases" element={<PlaceholderPage title="Purchases" />} />
