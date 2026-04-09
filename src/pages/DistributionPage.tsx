@@ -6,6 +6,7 @@ import {
 } from '@/data/mockData';
 import { ChevronRight, X, Check, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import UpgradeModal from '@/components/UpgradeModal';
 
 type Tab = 'all' | 'unallocated' | 'allocated' | 'fulfilled';
 
