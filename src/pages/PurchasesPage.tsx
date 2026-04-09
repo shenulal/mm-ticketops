@@ -248,8 +248,6 @@ function PurchaseEditModal({ purchaseId, onClose, onSave }: {
   const matchSubGames = getSubGamesForMatch(purchase.matchId);
   const hasAnyAllocated = purchase.lines.some(l => lineUnitStats(l.id).allocated > 0);
 
-    })
-  );
 
   const updateLine = (id: string, field: keyof EditLineState, value: any) => {
     setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
