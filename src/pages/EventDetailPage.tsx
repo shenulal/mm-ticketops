@@ -308,38 +308,58 @@ function VendorTab({ event }: { event: EventDef }) {
   const [selVendor, setSelVendor] = useState('');
   const [platformUrl, setPlatformUrl] = useState('');
   const [loginEmail, setLoginEmail] = useState('');
+  const [credentialHint, setCredentialHint] = useState('');
+  const [contact, setContact] = useState('');
+  const [notes, setNotes] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const assignedIds = bridges.map(b => b.vendorId);
   const available = ctx.vendors.filter(v => v.isActive && !assignedIds.includes(v.id));
 
   const handleAssign = () => {
-    if (!selVendor) return;
+    if (!selVendor || !platformUrl.trim() || !loginEmail.trim()) { toast.error('Fill in required fields'); return; }
     ctx.setVendorEventBridge({
       id: `veb-${Date.now()}`, vendorId: selVendor, eventId: event.id,
-      platformUrl, loginEmail, credentialHint: '', primaryContactForEvent: '',
-      notes: '', isActive: true,
+      platformUrl, loginEmail, credentialHint,
+      primaryContactForEvent: contact, notes, isActive: true,
     });
-    toast.success('Vendor assigned');
+    toast.success('Vendor assigned to event');
     setAssigning(false); setSelVendor(''); setPlatformUrl(''); setLoginEmail('');
+    setCredentialHint(''); setContact(''); setNotes('');
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-body text-sm font-semibold text-foreground">{bridges.length} vendors assigned</h3>
+        <div>
+          <h3 className="font-body text-sm font-semibold text-foreground">Vendors assigned to this event ({bridges.length})</h3>
+          <p className="font-body text-[12px] text-muted-foreground mt-0.5">These vendors are available in purchase forms for this event. <Link to="/masters/vendors" className="text-primary underline">Manage all vendors globally →</Link></p>
+        </div>
         <RoleGuard roles={['super_admin', 'ops_manager']}>
           <Button size="sm" variant="outline" onClick={() => setAssigning(!assigning)}><Plus size={14} className="mr-1" /> Assign Vendor</Button>
         </RoleGuard>
       </div>
 
       {assigning && (
-        <div className="border border-border rounded-lg p-4 space-y-3">
-          <Select value={selVendor} onValueChange={setSelVendor}>
-            <SelectTrigger><SelectValue placeholder="Select vendor..." /></SelectTrigger>
-            <SelectContent>{available.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
-          </Select>
-          <Input value={platformUrl} onChange={e => setPlatformUrl(e.target.value)} placeholder="Platform URL" />
-          <Input value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="Login email" />
+        <div className="border border-border rounded-xl p-4 space-y-3 bg-muted/30">
+          <p className="font-body text-[13px] font-medium text-foreground">Assign Vendor to Event</p>
+          <div>
+            <label className="text-[11px] font-body text-muted-foreground">Vendor *</label>
+            <Select value={selVendor} onValueChange={setSelVendor}>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Select vendor..." /></SelectTrigger>
+              <SelectContent>{available.map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.code})</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="text-[11px] font-body text-muted-foreground">Platform URL *</label><Input className="mt-1" value={platformUrl} onChange={e => setPlatformUrl(e.target.value)} placeholder="viagogo.com" /></div>
+            <div><label className="text-[11px] font-body text-muted-foreground">Login Email *</label><Input className="mt-1" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} /></div>
+          </div>
+          <div><label className="text-[11px] font-body text-muted-foreground">Credential Hint</label><Input className="mt-1" value={credentialHint} onChange={e => setCredentialHint(e.target.value)} placeholder="Password format hint" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="text-[11px] font-body text-muted-foreground">Contact for Event</label><Input className="mt-1" value={contact} onChange={e => setContact(e.target.value)} /></div>
+            <div><label className="text-[11px] font-body text-muted-foreground">Notes</label><Input className="mt-1" value={notes} onChange={e => setNotes(e.target.value)} /></div>
+          </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={handleAssign}>Assign</Button>
             <Button size="sm" variant="ghost" onClick={() => setAssigning(false)}>Cancel</Button>
@@ -349,17 +369,68 @@ function VendorTab({ event }: { event: EventDef }) {
 
       {bridges.map(b => {
         const vendor = ctx.getVendor(b.vendorId);
+        const isEditing = editingId === b.id;
+        const isRemoving = removingId === b.id;
         return (
-          <div key={b.id} className="bg-card border border-border rounded-lg p-4 flex items-center justify-between">
-            <div>
-              <p className="font-body text-sm font-medium text-foreground">{vendor?.name ?? 'Unknown'}</p>
-              <p className="font-body text-xs text-muted-foreground">{b.platformUrl || 'No platform URL'}</p>
-              <p className="font-mono text-xs text-muted-foreground">{b.loginEmail ? '••••@' + b.loginEmail.split('@')[1] : 'No login'}</p>
+          <div key={b.id} className="bg-card border border-border rounded-xl p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <p className="font-body text-sm font-medium text-foreground">{vendor?.name ?? 'Unknown'}</p>
+                <span className="font-mono text-[10px] text-muted-foreground">{vendor?.code}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={() => setEditingId(isEditing ? null : b.id)}><Pencil size={14} /></Button>
+                <RoleGuard roles={['super_admin', 'ops_manager']}>
+                  <Button variant="ghost" size="sm" onClick={() => setRemovingId(isRemoving ? null : b.id)}><Trash2 size={14} className="text-destructive" /></Button>
+                </RoleGuard>
+              </div>
             </div>
-            <Button variant="ghost" size="sm"><Pencil size={14} /></Button>
+            <div className="text-[12px] font-body text-muted-foreground space-y-0.5">
+              <p>Platform: {b.platformUrl || '—'}</p>
+              <p>Login: {b.loginEmail || '—'}</p>
+              {b.credentialHint && <p>Hint: {b.credentialHint}</p>}
+              {b.primaryContactForEvent && <p>Contact: {b.primaryContactForEvent}</p>}
+            </div>
+            <p className="text-[10px] font-body text-muted-foreground italic">Global vendor profile → <Link to="/masters/vendors" className="text-primary underline">Vendors master</Link></p>
+
+            {isRemoving && (
+              <div className="p-2 rounded-lg bg-destructive/5 border border-destructive/20 space-y-2">
+                <p className="text-[12px] font-body text-foreground">Remove {vendor?.name} from {event.name}?</p>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="destructive" onClick={() => { ctx.vendorEventBridges.splice(ctx.vendorEventBridges.indexOf(b), 1); toast.success('Vendor removed from event'); setRemovingId(null); }}>Remove</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setRemovingId(null)}>Cancel</Button>
+                </div>
+              </div>
+            )}
+
+            {isEditing && (
+              <VendorBridgeEditForm bridge={b} onDone={() => setEditingId(null)} />
+            )}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function VendorBridgeEditForm({ bridge, onDone }: { bridge: any; onDone: () => void }) {
+  const ctx = useAppContext();
+  const [form, setForm] = useState({ platformUrl: bridge.platformUrl, loginEmail: bridge.loginEmail, credentialHint: bridge.credentialHint, primaryContactForEvent: bridge.primaryContactForEvent, notes: bridge.notes });
+  return (
+    <div className="border-t border-border pt-2 space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <div><label className="text-[11px] font-body text-muted-foreground">Platform URL</label><Input value={form.platformUrl} onChange={e => setForm(f => ({ ...f, platformUrl: e.target.value }))} /></div>
+        <div><label className="text-[11px] font-body text-muted-foreground">Login Email</label><Input value={form.loginEmail} onChange={e => setForm(f => ({ ...f, loginEmail: e.target.value }))} /></div>
+      </div>
+      <div><label className="text-[11px] font-body text-muted-foreground">Credential Hint</label><Input value={form.credentialHint} onChange={e => setForm(f => ({ ...f, credentialHint: e.target.value }))} /></div>
+      <div className="grid grid-cols-2 gap-2">
+        <div><label className="text-[11px] font-body text-muted-foreground">Contact</label><Input value={form.primaryContactForEvent} onChange={e => setForm(f => ({ ...f, primaryContactForEvent: e.target.value }))} /></div>
+        <div><label className="text-[11px] font-body text-muted-foreground">Notes</label><Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} /></div>
+      </div>
+      <div className="flex gap-2">
+        <Button size="sm" onClick={() => { ctx.setVendorEventBridge({ ...bridge, ...form }); toast.success('Updated'); onDone(); }}>Save</Button>
+        <Button size="sm" variant="ghost" onClick={onDone}>Cancel</Button>
+      </div>
     </div>
   );
 }
@@ -369,41 +440,88 @@ function ContractsTab({ event }: { event: EventDef }) {
   const ctx = useAppContext();
   const navigate = useNavigate();
   const eventContracts = ctx.contracts.filter(c => c.eventId === event.id);
-  const purchases = eventContracts.filter(c => c.contractType === 'PURCHASE');
-  const sales = eventContracts.filter(c => c.contractType === 'SALE');
+  const [filter, setFilter] = useState<'ALL' | 'PURCHASE' | 'SALE' | 'ACTIVE' | 'EXPIRED'>('ALL');
 
-  const renderContract = (c: typeof eventContracts[0]) => {
-    const party = c.partyType === 'VENDOR' ? ctx.getVendor(c.partyId) : ctx.getClient(c.partyId);
-    const partyName = c.partyType === 'VENDOR' ? (party as any)?.name : (party as any)?.companyName;
-    return (
-      <div key={c.id} className="border border-border rounded-lg p-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="font-mono text-xs font-bold text-foreground">{c.contractRef}</span>
-          <Badge variant={c.status === 'ACTIVE' ? 'default' : 'secondary'} className="text-[10px]">{c.status}</Badge>
-        </div>
-        <p className="font-body text-sm text-foreground">{partyName ?? 'Unknown'}</p>
-        <p className="font-body text-xs text-muted-foreground">{c.validFrom} → {c.validTo}</p>
-        <p className="font-body text-xs text-muted-foreground mt-1">Max: {ctx.formatCurrency(c.maxValue, c.currency)}</p>
-      </div>
-    );
-  };
+  const filtered = eventContracts.filter(c => {
+    if (filter === 'PURCHASE') return c.contractType === 'PURCHASE';
+    if (filter === 'SALE') return c.contractType === 'SALE';
+    if (filter === 'ACTIVE') return c.status === 'ACTIVE';
+    if (filter === 'EXPIRED') return c.status === 'EXPIRED';
+    return true;
+  });
+
+  const uniqueClients = new Set(eventContracts.filter(c => c.contractType === 'SALE').map(c => c.partyId));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-body text-sm font-semibold text-foreground">Purchase Contracts ({purchases.length})</h3>
-          <Button size="sm" variant="outline" onClick={() => navigate('/masters/contracts')}><Plus size={14} className="mr-1" /> Add</Button>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-body text-sm font-semibold text-foreground">Clients with contracts for this event ({uniqueClients.size})</h3>
+            <p className="font-body text-[12px] text-muted-foreground mt-0.5">Clients appear in sale forms only when they have an active contract here. <Link to="/masters/clients" className="text-primary underline">Manage all clients globally →</Link></p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => navigate('/masters/contracts')}><Plus size={14} className="mr-1" /> Add Contract</Button>
         </div>
-        <div className="space-y-2">{purchases.map(renderContract)}</div>
-        {purchases.length === 0 && <p className="font-body text-sm text-muted-foreground">No purchase contracts</p>}
       </div>
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-body text-sm font-semibold text-foreground">Sale Contracts ({sales.length})</h3>
-        </div>
-        <div className="space-y-2">{sales.map(renderContract)}</div>
-        {sales.length === 0 && <p className="font-body text-sm text-muted-foreground">No sale contracts</p>}
+
+      {/* Filter pills */}
+      <div className="flex gap-1.5 flex-wrap">
+        {(['ALL', 'PURCHASE', 'SALE', 'ACTIVE', 'EXPIRED'] as const).map(f => (
+          <button key={f} onClick={() => setFilter(f)}
+            className={`px-3 py-1.5 rounded-full font-body text-xs font-medium transition-colors ${filter === f ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>
+            {f === 'ALL' ? 'All' : f.charAt(0) + f.slice(1).toLowerCase()}{f === 'ALL' ? ` (${eventContracts.length})` : ''}
+          </button>
+        ))}
+      </div>
+
+      {/* Contract table */}
+      <div className="border border-border rounded-xl overflow-hidden">
+        <table className="w-full text-[13px] font-body">
+          <thead>
+            <tr className="bg-muted/50">
+              <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Contract Ref</th>
+              <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Party</th>
+              <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Type</th>
+              <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Valid Period</th>
+              <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Max Value</th>
+              <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Utilised</th>
+              <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(c => {
+              const party = c.partyType === 'VENDOR' ? ctx.getVendor(c.partyId) : ctx.getClient(c.partyId);
+              const partyName = c.partyType === 'VENDOR' ? (party as any)?.name : (party as any)?.companyName;
+              // Mock utilisation: random-ish based on contract
+              const utilPct = c.status === 'ACTIVE' ? Math.min(Math.round((c.contractRef.charCodeAt(c.contractRef.length - 1) % 7) * 15), 100) : 0;
+              return (
+                <tr key={c.id} className="border-t border-border hover:bg-muted/30 cursor-pointer" onClick={() => navigate('/masters/contracts')}>
+                  <td className="px-4 py-3 font-mono text-[12px]">{c.contractRef}</td>
+                  <td className="px-4 py-3">{partyName ?? 'Unknown'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${c.contractType === 'SALE' ? 'bg-success/15 text-success' : 'bg-primary/10 text-primary'}`}>{c.contractType}</span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{c.validFrom} → {c.validTo}</td>
+                  <td className="px-4 py-3">{ctx.formatCurrency(c.maxValue, c.currency)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-1.5 rounded-full bg-border">
+                        <div className="h-1.5 rounded-full bg-accent" style={{ width: `${utilPct}%` }} />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground">{utilPct}%</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${c.status === 'ACTIVE' ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground'}`}>{c.status}</span>
+                  </td>
+                </tr>
+              );
+            })}
+            {filtered.length === 0 && (
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No contracts match the filter</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
