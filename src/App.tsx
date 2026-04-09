@@ -23,7 +23,11 @@ import UsersPage from "@/pages/UsersPage";
 import EventsPage from "@/pages/EventsPage";
 import EventDetailPage from "@/pages/EventDetailPage";
 import SettingsPage from "@/pages/SettingsPage";
-import MasterDataPage from "@/pages/MasterDataPage";
+import VendorsPage from "@/pages/masters/VendorsPage";
+import ClientsPage from "@/pages/masters/ClientsPage";
+import ContractsPage from "@/pages/masters/ContractsPage";
+import VenuesPage from "@/pages/masters/VenuesPage";
+import CurrenciesPage from "@/pages/masters/CurrenciesPage";
 import AdminPage from "@/pages/AdminPage";
 import NotFound from "@/pages/NotFound";
 
@@ -60,7 +64,11 @@ const App = () => (
                 <Route path="/staff-queue" element={<StaffQueuePage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/users" element={<UsersPage />} />
-                <Route path="/masters/:entity" element={<MasterDataPage />} />
+                <Route path="/masters/vendors" element={<VendorsPage />} />
+                <Route path="/masters/clients" element={<ClientsPage />} />
+                <Route path="/masters/contracts" element={<ContractsPage />} />
+                <Route path="/masters/venues" element={<VenuesPage />} />
+                <Route path="/masters/currencies" element={<CurrenciesPage />} />
                 <Route path="/admin/:section" element={<AdminPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/settings/:section" element={<SettingsPage />} />
