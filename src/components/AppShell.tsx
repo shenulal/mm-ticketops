@@ -123,23 +123,11 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'notif-templates', label: 'Notification Templates', icon: 'Bell', path: '/admin/notifications',
         roles: ['super_admin', 'event_admin'] },
       { id: 'settings', label: 'Settings', icon: 'Settings', path: '/settings',
-        roles: ['super_admin'], hasSubItems: true },
+        roles: ['super_admin'] },
     ],
   },
 ];
 
-const SETTINGS_SUBNAV = [
-  { path: '/settings', label: 'Organisation Profile' },
-  { path: '/settings/event-defaults', label: 'Event Defaults' },
-  { path: '/settings/rbac', label: 'RBAC & Permissions' },
-  { path: '/settings/notifications', label: 'Notifications' },
-  { path: '/settings/allocation', label: 'Allocation Rules' },
-  { path: '/settings/portal', label: 'Portal Settings' },
-  { path: '/settings/currency', label: 'Currency & Pricing' },
-  { path: '/settings/audit', label: 'Audit & Compliance' },
-  { path: '/settings/integrations', label: 'Integrations' },
-  { path: '/settings/system', label: 'System Info' },
-];
 
 const ROLE_BADGES: Record<string, { label: string; bg: string; text: string }> = {
   super_admin: { label: 'Super Admin', bg: 'rgba(254,226,226,0.25)', text: '#FCA5A5' },
@@ -227,10 +215,10 @@ export default function AppShell() {
 
   const role = currentUser?.role ?? '';
   const pageTitle = getPageTitle(location.pathname);
-  const onSettings = location.pathname.startsWith('/settings');
+  
 
-  const isItemActive = (path: string, hasSubItems?: boolean) => {
-    if (hasSubItems) return location.pathname.startsWith(path);
+  const isItemActive = (path: string) => {
+    if (path === '/settings') return location.pathname.startsWith('/settings');
     return location.pathname === path;
   };
 
@@ -239,7 +227,7 @@ export default function AppShell() {
   // ── Render helpers ──
   const renderItem = (item: NavItem) => {
     const Icon = ICONS[item.icon];
-    const active = isItemActive(item.path, item.hasSubItems);
+    const active = isItemActive(item.path);
     const badge = item.badgeKey ? (navBadges as Record<string, number>)[item.badgeKey] : 0;
 
     return (
@@ -267,27 +255,6 @@ export default function AppShell() {
     );
   };
 
-  const renderSettingsSubnav = () => (
-    <div className="ml-8 mt-1 mb-1 space-y-0.5 border-l border-[rgba(255,255,255,0.15)] pl-3">
-      {SETTINGS_SUBNAV.map(sub => {
-        const subActive = location.pathname === sub.path;
-        return (
-          <RRNavLink
-            key={sub.path}
-            to={sub.path}
-            onClick={() => setMobileOpen(false)}
-            className={`block py-1.5 px-2 rounded-lg text-[12px] font-body transition-colors ${
-              subActive
-                ? 'text-gold font-medium bg-[rgba(255,255,255,0.08)]'
-                : 'text-[rgba(255,255,255,0.55)] hover:text-[rgba(255,255,255,0.8)] hover:bg-[rgba(255,255,255,0.04)]'
-            }`}
-          >
-            {sub.label}
-          </RRNavLink>
-        );
-      })}
-    </div>
-  );
 
   const renderGroup = (group: NavGroup) => {
     // Role-gate group
@@ -321,13 +288,12 @@ export default function AppShell() {
         )}
         <div
           className="overflow-hidden transition-all duration-200"
-          style={group.collapsible ? { maxHeight: isCollapsed ? 0 : `${visibleItems.length * 48 + (onSettings ? SETTINGS_SUBNAV.length * 32 : 0)}px` } : undefined}
+          style={group.collapsible ? { maxHeight: isCollapsed ? 0 : `${visibleItems.length * 48}px` } : undefined}
         >
           <div className="space-y-0.5">
             {visibleItems.map(item => (
               <div key={item.id}>
                 {renderItem(item)}
-                {item.hasSubItems && onSettings && renderSettingsSubnav()}
               </div>
             ))}
           </div>
