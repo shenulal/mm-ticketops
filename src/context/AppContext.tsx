@@ -353,6 +353,12 @@ interface AppContextType {
   updateCategory(subGameId: string, categoryId: string, data: Partial<SubGameCategory>): void;
   updateNotificationTemplate(id: string, data: Partial<NotificationTemplate>): void;
   setVendorEventBridge(bridge: VendorEventBridge): void;
+  addVendorCredential(cred: Omit<VendorCredential, 'id'>): void;
+  updateVendorCredential(id: string, data: Partial<VendorCredential>): void;
+  addCredentialHistoryEntry(entry: Omit<CredentialHistoryEntry, 'id'>): void;
+  getCredentialsForVendor(vendorId: string): VendorCredential[];
+  getCredentialHistory(credentialId: string): CredentialHistoryEntry[];
+  getBestCredential(vendorId: string, eventId: string): VendorCredential | undefined;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
