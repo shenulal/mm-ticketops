@@ -882,7 +882,12 @@ const SECTION_COMPONENTS: Record<string, React.FC> = {
 };
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState('org');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Derive active section from URL
+  const pathParts = location.pathname.split('/');
+  const activeSection = pathParts[2] || 'org';
   const ActiveComponent = SECTION_COMPONENTS[activeSection] || OrgSection;
 
   return (
@@ -894,7 +899,7 @@ export default function SettingsPage() {
             const Icon = s.icon;
             const active = activeSection === s.id;
             return (
-              <button key={s.id} onClick={() => setActiveSection(s.id)}
+              <button key={s.id} onClick={() => navigate(`/settings/${s.id}`)}
                 className={`w-full h-[42px] flex items-center gap-3 px-3 rounded-xl font-body text-sm transition-colors ${
                   active ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
                 }`}>
