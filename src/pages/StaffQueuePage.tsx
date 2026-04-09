@@ -17,6 +17,13 @@ function StaffView() {
   const [showPasswords, setShowPasswords] = useState<Set<string>>(new Set());
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
+  // Auto-hide passwords after 10 seconds
+  useEffect(() => {
+    if (showPasswords.size === 0) return;
+    const timer = setTimeout(() => setShowPasswords(new Set()), 10000);
+    return () => clearTimeout(timer);
+  }, [showPasswords]);
+
   const sentCount = tasks.filter(t => t.status === 'SENT').length;
   const notSentCount = tasks.filter(t => t.status === 'NOT_SENT').length;
 
