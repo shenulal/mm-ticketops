@@ -115,7 +115,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     id: 'administration', label: 'ADMINISTRATION',
-    roles: ['super_admin', 'event_admin'],
+    roles: ['super_admin', 'event_admin', 'ops_manager', 'sr_operator'],
     collapsible: true, defaultOpen: false,
     items: [
       { id: 'users', label: 'Users & Roles', icon: 'UserCog', path: '/admin/users',
