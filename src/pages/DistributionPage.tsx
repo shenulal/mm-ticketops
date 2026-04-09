@@ -1,4 +1,5 @@
 import React, { useState, useMemo, Fragment } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
 import { useEvent } from '@/context/EventContext';
 import {
@@ -101,6 +102,7 @@ function AllocateAllModal({ saleId, onClose, onConfirm }: { saleId: string; onCl
 
 /* ── Main Page ── */
 export default function DistributionPage() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('all');
   const [catFilter, setCatFilter] = useState('all');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -241,9 +243,9 @@ export default function DistributionPage() {
                       </td>
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                         <div className="flex gap-2">
-                          <button onClick={() => setAllocateAllSale(s.id)}
+                          <button onClick={() => navigate(`/distribution/${s.id}/preview`)}
                             className="px-3 py-1.5 rounded-lg font-body text-xs font-medium bg-accent text-accent-foreground hover:opacity-90">
-                            Allocate All
+                            Allocate
                           </button>
                           <button className="font-body text-xs text-primary hover:underline">Upgrade</button>
                           <button className="font-body text-xs text-destructive hover:underline">Cancel</button>
@@ -289,7 +291,7 @@ export default function DistributionPage() {
                                   <button className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
                                 ) : li.status !== 'ALLOCATED' && li.status !== 'FULFILLED' ? (
                                   <button
-                                    onClick={() => { setAllocatorCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx }); setBlockSelected(false); setAllocated(false); setManualMode(false); setManualSelected(new Set()); }}
+                                    onClick={() => navigate(`/distribution/${s.id}/preview`)}
                                     className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-accent text-accent-foreground hover:opacity-90">
                                     Allocate
                                   </button>
