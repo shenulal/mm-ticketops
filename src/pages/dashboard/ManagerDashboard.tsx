@@ -260,6 +260,13 @@ export default function ManagerDashboard() {
           </ChartCard>
         </div>
       </div>
+      <AnimatePresence>
+        {oversellCtx && <OversellResolutionDrawer
+          saleId={oversellCtx.saleId} lineItem={oversellCtx.line} lineIdx={oversellCtx.lineIdx}
+          onClose={() => setOversellCtx(null)}
+          onResolved={() => setOversellCtx(null)}
+        />}
+      </AnimatePresence>
     </div>
   );
 }
