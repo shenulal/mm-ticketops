@@ -1,24 +1,17 @@
 import { useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useAppContext } from '@/context/AppContext';
+import { useEvent } from '@/context/EventContext';
 import RoleGuard from '@/components/RoleGuard';
 import {
-  MOCK_PURCHASES, MOCK_MATCHES, MOCK_UNITS, MOCK_PURCHASE_LINE_ITEMS,
-  MOCK_SUBGAMES, hasMultipleSubGames, getSubGamesForMatch,
-  type PurchaseLineItem, type SubGame,
+  MOCK_PURCHASES, MOCK_UNITS, MOCK_PURCHASE_LINE_ITEMS, MOCK_MATCHES, MOCK_SUBGAMES,
+  hasMultipleSubGames, getSubGamesForMatch,
+  type PurchaseLineItem,
 } from '@/data/mockData';
+import { useContextHelpers } from '@/hooks/useContextHelpers';
 import { ChevronRight, X, Lock, AlertTriangle, Plus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-/* ── helpers ── */
-function getMatchLabel(matchId: string) {
-  const m = MOCK_MATCHES.find(x => x.id === matchId);
-  return m ? `${m.code} ${m.teams}` : matchId;
-}
-
-function getSubGameName(subGameId: string) {
-  return MOCK_SUBGAMES.find(sg => sg.id === subGameId)?.name ?? '—';
-}
 
 function lineUnitStats(lineItemId: string) {
   const units = MOCK_UNITS.filter(u => u.lineItemId === lineItemId);
@@ -26,6 +19,8 @@ function lineUnitStats(lineItemId: string) {
   const available = units.filter(u => u.status === 'AVAILABLE').length;
   return { total: units.length, allocated, available };
 }
+function getMatchLabel(matchId: string) { const m = MOCK_MATCHES.find(x => x.id === matchId); return m ? `${m.code} ${m.teams}` : matchId; }
+function getSubGameName(sgId: string) { return MOCK_SUBGAMES.find(sg => sg.id === sgId)?.name ?? '—'; }
 
 /* ── Unit Drawer ── */
 type DrawerMode =
@@ -248,6 +243,8 @@ function PurchaseEditModal({ purchaseId, onClose, onSave }: {
   const matchSubGames = getSubGamesForMatch(purchase.matchId);
   const hasAnyAllocated = purchase.lines.some(l => lineUnitStats(l.id).allocated > 0);
 
+function getMatchLabel(matchId: string) { const m = MOCK_MATCHES.find(x => x.id === matchId); return m ? `${m.code} ${m.teams}` : matchId; }
+function getSubGameName(sgId: string) { return MOCK_SUBGAMES.find(sg => sg.id === sgId)?.name ?? '—'; }
 
   const updateLine = (id: string, field: keyof EditLineState, value: any) => {
     setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
@@ -450,6 +447,7 @@ function PurchaseEditModal({ purchaseId, onClose, onSave }: {
 /* ── Main Page ── */
 export default function PurchasesPage() {
   const navigate = useNavigate();
+  const { eventMatches, eventVendors, activeEvent, ctx } = useContextHelpers();
   const [matchFilter, setMatchFilter] = useState('all');
   const [catFilter, setCatFilter] = useState('all');
   const [vendorFilter, setVendorFilter] = useState('all');
@@ -496,18 +494,18 @@ export default function PurchasesPage() {
       </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
-        <select className={selectClass} disabled><option>FIFA WC 2026</option></select>
+        <select className={selectClass} disabled><option>{activeEvent.name}</option></select>
         <select className={selectClass} value={matchFilter} onChange={e => setMatchFilter(e.target.value)}>
           <option value="all">All Matches</option>
-          {MOCK_MATCHES.map(m => <option key={m.id} value={m.code}>{m.code} — {m.teams}</option>)}
+          {eventMatches.map(m => <option key={m.id} value={m.code}>{m.code} — {m.teamsOrDescription}</option>)}
         </select>
         <select className={selectClass} value={catFilter} onChange={e => setCatFilter(e.target.value)}>
           <option value="all">All Categories</option>
-          <option>Top Cat 1</option><option>Cat 2</option><option>Cat 3</option><option>Cat 4</option>
-          <option>Grandstand A</option><option>Paddock Club</option>
+          {ctx.subGames.flatMap(sg => sg.categories).filter((c, i, a) => a.findIndex(x => x.displayName === c.displayName) === i).map(c => <option key={c.id} value={c.displayName}>{c.displayName}</option>)}
         </select>
         <select className={selectClass} value={vendorFilter} onChange={e => setVendorFilter(e.target.value)}>
-          <option value="all">All Vendors</option><option>poxami</option><option>viagogo</option>
+          <option value="all">All Vendors</option>
+          {eventVendors.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
         </select>
       </div>
 

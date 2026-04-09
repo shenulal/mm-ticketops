@@ -1,11 +1,14 @@
 import React, { useState, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RoleGuard from '@/components/RoleGuard';
+import { useAppContext } from '@/context/AppContext';
+import { useEvent } from '@/context/EventContext';
 import {
   MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_MATCHES, MOCK_SUBGAMES, MOCK_UNITS, MOCK_DIST_ROWS,
   getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable,
   type SaleLineItem,
 } from '@/data/mockData';
+import { useContextHelpers } from '@/hooks/useContextHelpers';
 import { AlertTriangle, ChevronRight, X, Lock, Plus, Trash2, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import UpgradeModal from '@/components/UpgradeModal';
@@ -20,16 +23,9 @@ const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
   CANCELLED:        { label: 'CANCELLED',        cls: 'bg-destructive/10 text-destructive' },
 };
 
-function getMatchLabel(matchId: string) {
-  const m = MOCK_MATCHES.find(x => x.id === matchId);
-  return m ? `${m.code} ${m.teams}` : matchId;
-}
-function getMatchCode(matchId: string) {
-  return MOCK_MATCHES.find(x => x.id === matchId)?.code ?? matchId;
-}
-function getSubGameName(subGameId: string) {
-  return MOCK_SUBGAMES.find(sg => sg.id === subGameId)?.name ?? '—';
-}
+function getMatchLabel(matchId: string) { const m = MOCK_MATCHES.find(x => x.id === matchId); return m ? `${m.code} ${m.teams}` : matchId; }
+function getMatchCode(matchId: string) { return MOCK_MATCHES.find(x => x.id === matchId)?.code ?? matchId; }
+function getSubGameName(sgId: string) { return MOCK_SUBGAMES.find(sg => sg.id === sgId)?.name ?? '—'; }
 
 function deriveOverallStatus(lines: SaleLineItem[]): string {
   if (lines.length === 0) return 'CANCELLED';

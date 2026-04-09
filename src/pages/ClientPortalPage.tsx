@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { useAppContext } from '@/context/AppContext';
 import { Lock, CheckCircle, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import {
   MOCK_SALES, MOCK_MATCHES, MOCK_SUBGAMES, MOCK_DIST_ROWS,

@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { useAppContext } from '@/context/AppContext';
+import { useEvent } from '@/context/EventContext';
 import { TrendingUp, ShoppingCart, BarChart3, Send, ChevronRight, ChevronDown } from 'lucide-react';
 import {
   MOCK_MATCHES, MOCK_SUBGAMES, MOCK_PURCHASE_LINE_ITEMS, MOCK_SALE_LINE_ITEMS,
