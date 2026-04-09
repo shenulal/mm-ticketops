@@ -519,12 +519,105 @@ export const MOCK_REVENUE_TIMELINE = [
   { date: 'Apr 20', saleRevenue: 716692, purchaseCost: 750795, margin: -34103 },
 ];
 
-// === STAFF TASKS (kept for StaffQueuePage / SupplierPortalPage) ===
+// === STAFF TASKS ===
 
-export const MOCK_STAFF_TASKS = [
-  { id: 'tq1', saleChildId: 's250132-1', unitId: 'P00001', vendor: 'poxami', invNo: '630679135', vendorLogin: 'clara@cc.WC#20', clientName: 'John Smith', clientEmail: 'john.smith@roadtrips.ae', assignedTo: 'u5', status: 'SENT', dispatchedAt: '17 Apr 2026 14:32' },
-  { id: 'tq2', saleChildId: 's250132-2', unitId: 'P00002', vendor: 'poxami', invNo: '630679136', vendorLogin: 'clara@cc.WC#20', clientName: 'Emma Watson', clientEmail: 'emma.w@roadtrips.ae', assignedTo: 'u5', status: 'NOT_SENT', dispatchedAt: null },
-  { id: 'tq3', saleChildId: 's250132-3', unitId: 'P00003', vendor: 'poxami', invNo: '630679137', vendorLogin: 'clara@cc.WC#20', clientName: 'Robert Chen', clientEmail: 'r.chen@roadtrips.ae', assignedTo: 'u5', status: 'NOT_SENT', dispatchedAt: null },
-  { id: 'tq4', saleChildId: 's250132-4', unitId: 'P00004', vendor: 'poxami', invNo: '630679138', vendorLogin: 'clara@cc.WC#20', clientName: 'Aisha Al Kabi', clientEmail: 'aisha@roadtrips.ae', assignedTo: 'u5', status: 'NOT_SENT', dispatchedAt: null },
-  { id: 'tq5', saleChildId: 's250132-5', unitId: 'P00005', vendor: 'poxami', invNo: '630679139', vendorLogin: 'clara@cc.WC#20', clientName: 'Tom Williams', clientEmail: 'tom.w@roadtrips.ae', assignedTo: 'u5', status: 'NOT_SENT', dispatchedAt: null },
+export type TaskPriority = 'High' | 'Normal' | 'Low';
+export type TaskStatus = 'NOT_SENT' | 'SENT' | 'PENDING' | 'ACCEPTED' | 'ISSUE';
+
+export interface StaffTask {
+  id: string;
+  saleChildId: string;
+  unitId: string;
+  vendor: string;
+  invNo: string;
+  vendorLogin: string;
+  vendorEmail: string;
+  vendorPassword: string; // stored encrypted; masked in UI
+  contractNo: string;
+  clientFirstName: string;
+  clientLastName: string;
+  clientEmail: string;
+  clientPhone: string;
+  clientNotes: string;
+  matchCode: string;
+  matchLabel: string;
+  category: string;
+  sets: number;
+  qty: number;
+  block: string;
+  row: string;
+  seat: string;
+  assignedTo: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dispatchedAt: string | null;
+  proofUrl: string | null;
+  staffNote: string;
+  activityLog: { action: string; actor: string; at: string }[];
+}
+
+export const MOCK_STAFF_TASKS: StaffTask[] = [
+  {
+    id: 'tq1', saleChildId: 's250132-1', unitId: 'P00001', vendor: 'poxami', invNo: '630679135',
+    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@poxami.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
+    clientFirstName: 'John', clientLastName: 'Smith', clientEmail: 'john.smith@roadtrips.ae', clientPhone: '+971 50 123 4567', clientNotes: 'VIP – ensure early delivery',
+    matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
+    block: 'C', row: '12', seat: '14',
+    assignedTo: 'u5', status: 'SENT', priority: 'High', dispatchedAt: '17 Apr 2026 14:32', proofUrl: '/proof/tq1.pdf', staffNote: '',
+    activityLog: [
+      { action: 'CREATED', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:00' },
+      { action: 'ASSIGNED → Mohammed Hassan', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:05' },
+      { action: 'Status → SENT', actor: 'Mohammed Hassan', at: '17 Apr 2026 14:32' },
+    ],
+  },
+  {
+    id: 'tq2', saleChildId: 's250132-2', unitId: 'P00002', vendor: 'poxami', invNo: '630679136',
+    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@poxami.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
+    clientFirstName: 'Emma', clientLastName: 'Watson', clientEmail: 'emma.w@roadtrips.ae', clientPhone: '+971 50 234 5678', clientNotes: '',
+    matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
+    block: 'C', row: '12', seat: '15',
+    assignedTo: 'u5', status: 'NOT_SENT', priority: 'Normal', dispatchedAt: null, proofUrl: null, staffNote: '',
+    activityLog: [
+      { action: 'CREATED', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:00' },
+      { action: 'ASSIGNED → Mohammed Hassan', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:05' },
+    ],
+  },
+  {
+    id: 'tq3', saleChildId: 's250132-3', unitId: 'P00003', vendor: 'poxami', invNo: '630679137',
+    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@poxami.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
+    clientFirstName: 'Robert', clientLastName: 'Chen', clientEmail: 'r.chen@roadtrips.ae', clientPhone: '', clientNotes: 'Wheelchair accessible required',
+    matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
+    block: '', row: '', seat: '',
+    assignedTo: 'u5', status: 'NOT_SENT', priority: 'High', dispatchedAt: null, proofUrl: null, staffNote: '',
+    activityLog: [
+      { action: 'CREATED', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:00' },
+      { action: 'ASSIGNED → Mohammed Hassan', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:05' },
+    ],
+  },
+  {
+    id: 'tq4', saleChildId: 's250132-4', unitId: 'P00004', vendor: 'poxami', invNo: '630679138',
+    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@poxami.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
+    clientFirstName: 'Aisha', clientLastName: 'Al Kabi', clientEmail: 'aisha@roadtrips.ae', clientPhone: '+971 55 987 6543', clientNotes: '',
+    matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
+    block: 'C', row: '12', seat: '17',
+    assignedTo: 'u5', status: 'PENDING', priority: 'Normal', dispatchedAt: null, proofUrl: null, staffNote: '',
+    activityLog: [
+      { action: 'CREATED', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:00' },
+      { action: 'ASSIGNED → Mohammed Hassan', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:05' },
+      { action: 'Status → PENDING', actor: 'Mohammed Hassan', at: '17 Apr 2026 10:00' },
+    ],
+  },
+  {
+    id: 'tq5', saleChildId: 's250132-5', unitId: 'P00005', vendor: 'poxami', invNo: '630679139',
+    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@poxami.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
+    clientFirstName: 'Tom', clientLastName: 'Williams', clientEmail: 'tom.w@roadtrips.ae', clientPhone: '', clientNotes: '',
+    matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
+    block: 'C', row: '13', seat: '1',
+    assignedTo: 'u5', status: 'ISSUE', priority: 'High', dispatchedAt: null, proofUrl: null, staffNote: 'Vendor site showing sold out — escalated',
+    activityLog: [
+      { action: 'CREATED', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:00' },
+      { action: 'ASSIGNED → Mohammed Hassan', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:05' },
+      { action: 'Status → ISSUE: Vendor site showing sold out', actor: 'Mohammed Hassan', at: '17 Apr 2026 11:15' },
+    ],
+  },
 ];

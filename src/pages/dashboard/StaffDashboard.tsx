@@ -95,7 +95,7 @@ export default function StaffDashboard() {
               <div key={t.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
                 <CheckCircle size={14} style={{ color: CHART_COLORS.green }} />
                 <span className="font-mono text-[12px]">{t.unitId}</span>
-                <span className="font-body text-[12px] text-foreground">{t.clientName}</span>
+                <span className="font-body text-[12px] text-foreground">{t.clientFirstName} {t.clientLastName}</span>
                 <span className="font-body text-[11px] text-muted-foreground ml-auto">{t.dispatchedAt}</span>
               </div>
             ))}
