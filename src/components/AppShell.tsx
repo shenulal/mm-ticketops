@@ -14,6 +14,7 @@ import {
   GitBranch, Users, ExternalLink, BarChart3, Truck, Building2,
   FileText, MapPin, DollarSign, UserCog, Bell, Settings, Key,
   ChevronDown, ChevronRight, LogOut, Menu, X, Shield, ClipboardCheck,
+  Search,
   type LucideIcon,
 } from 'lucide-react';
 
