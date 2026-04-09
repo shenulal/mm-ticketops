@@ -228,24 +228,28 @@ function SaleEditModal({ saleId, onClose, onSave }: {
 }) {
   const [activeTab, setActiveTab] = useState<'details' | 'lines'>('details');
   const [removeConfirm, setRemoveConfirm] = useState<string | null>(null);
+  const [client, setClient] = useState('');
+  const [contract, setContract] = useState('');
+  const [date, setDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [lines, setLines] = useState<EditSaleLineState[]>([]);
+  const [initialized, setInitialized] = useState(false);
 
   const sale = MOCK_SALES.find(s => s.id === saleId);
   if (!sale) return null;
-  const saleLabel = sale.id.toUpperCase().replace('SALE', 'SALE-');
-  const matchSubGames = getSubGamesForMatch(sale.matchId);
 
-  const [client, setClient] = useState(sale.client);
-  const [contract, setContract] = useState(sale.contract);
-  const [date, setDate] = useState(sale.date);
-  const [notes, setNotes] = useState(sale.notes);
-
-  const [lines, setLines] = useState<EditSaleLineState[]>(() =>
-    sale.lines.map(l => {
+  if (!initialized) {
+    setClient(sale.client); setContract(sale.contract); setDate(sale.date); setNotes(sale.notes);
+    setLines(sale.lines.map(l => {
       const distRows = MOCK_DIST_ROWS.filter(dr => dr.lineItemId === l.id);
       const dispatched = distRows.filter(dr => dr.dispatchStatus === 'SENT').length;
       return { id: l.id, subGameId: l.subGameId, categoryId: l.categoryId, categoryLabel: l.categoryLabel, qty: l.qty, unitPrice: l.unitPrice, status: l.status, hasRows: distRows.length > 0, dispatchedCount: dispatched };
-    })
-  );
+    }));
+    setInitialized(true);
+  }
+
+  const saleLabel = sale.id.toUpperCase().replace('SALE', 'SALE-');
+  const matchSubGames = getSubGamesForMatch(sale.matchId);
 
   const updateLine = (id: string, field: keyof EditSaleLineState, value: any) => {
     setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
