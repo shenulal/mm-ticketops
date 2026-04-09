@@ -65,6 +65,18 @@ export interface Contract {
   documentUrl: string;
 }
 
+export interface VendorCredential {
+  id: string; vendorId: string; eventId: string | null;
+  loginId: string; email: string; passwordHash: string;
+  active: boolean; notes: string;
+  updatedBy: string; updatedAt: string; createdAt: string;
+}
+
+export interface CredentialHistoryEntry {
+  id: string; credentialId: string; action: 'CREATED' | 'UPDATED' | 'DEACTIVATED' | 'PASSWORD_VIEWED';
+  actor: string; timestamp: string; details: string;
+}
+
 export interface NotificationTemplate {
   id: string; triggerEvent: string; label: string;
   subjectTemplate: string; bodyTemplate: string;
