@@ -615,12 +615,12 @@ export default function SalesPage() {
                               {li.status === 'PENDING_APPROVAL' && isOversell ? (
                                 <>
                                   <button onClick={() => setModalCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
-                                  <button className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Upgrade</button>
+                                  <button onClick={() => setUpgradeCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Change Category</button>
                                 </>
                               ) : (
                                 <>
                                   <button className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-primary text-primary-foreground hover:opacity-90">Allocate</button>
-                                  {li.status === 'ALLOCATED' && <button className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Upgrade</button>}
+                                  <button onClick={() => setUpgradeCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="font-body text-[11px] hover:underline" style={{ color: '#0D9488' }}>Change Category</button>
                                 </>
                               )}
                               <button onClick={() => setLineCancelCtx({ saleId: s.id, line: li, lineIdx: liIdx })} className="font-body text-[11px] text-destructive hover:underline">Cancel Line</button>
