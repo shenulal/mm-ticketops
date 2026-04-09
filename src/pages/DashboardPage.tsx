@@ -1,5 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
-import { MOCK_SALES } from '@/data/mockData';
+import { MOCK_SALES, MOCK_SALE_LINE_ITEMS } from '@/data/mockData';
 import { ShoppingCart, TrendingUp, CheckCircle, Send, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -18,15 +18,15 @@ const INVENTORY_ROWS = [
 ];
 
 const ACTIVITY_ITEMS = [
-  { time: '14:32', text: 'James Patel allocated 12 units to Roadtrips (S250132)', dotColor: '#1A7A4A' },
-  { time: '13:15', text: 'Priya Nair entered sale S250145 — Blend Group Cat 2 x6 [PENDING]', dotColor: '#D97706' },
-  { time: '12:48', text: 'James Patel created purchase PUR-002 — viagogo Cat 2 x100', dotColor: '#3B82F6' },
+  { time: '14:32', text: 'James Patel allocated 12 units to Roadtrips (SLI-1-1)', dotColor: '#1A7A4A' },
+  { time: '13:15', text: 'Priya Nair entered sale line SLI-1-2 — Roadtrips Cat 2 x6 [PENDING]', dotColor: '#D97706' },
+  { time: '12:48', text: 'James Patel created purchase PUR-001 — poxami 3 lines, 203 units', dotColor: '#3B82F6' },
   { time: '11:30', text: 'Sara Al Mansoori activated FIFA WC 2026 event', dotColor: '#0B2D5E' },
 ];
 
 const UNALLOCATED_SALES = [
-  { id: 'S250145', client: 'Blend Group', category: 'Cat 2', qty: 6, action: 'Review', actionBg: '#D97706', pending: true },
-  { id: 'S250156', client: 'One2Travel', category: 'Cat 3', qty: 20, action: 'Allocate', actionBg: '#0B2D5E', pending: false },
+  { id: 'SLI-1-2', client: 'Roadtrips', category: 'Cat 2', qty: 6, action: 'Review', actionBg: '#D97706', pending: true },
+  { id: 'SLI-1-3', client: 'Roadtrips', category: 'Cat 3', qty: 20, action: 'Allocate', actionBg: '#0B2D5E', pending: false },
 ];
 
 function StatCard({ label, value, sub, borderColor, icon: Icon, iconColor }: typeof STAT_CARDS[0]) {
@@ -45,8 +45,10 @@ function StatCard({ label, value, sub, borderColor, icon: Icon, iconColor }: typ
 }
 
 function OversellBanner() {
-  const oversellSales = MOCK_SALES.filter(s => 'oversell' in s && s.oversell);
-  if (oversellSales.length === 0) return null;
+  const oversellLines = MOCK_SALE_LINE_ITEMS.filter(l => l.oversellFlag);
+  if (oversellLines.length === 0) return null;
+  const li = oversellLines[0];
+  const sale = MOCK_SALES.find(s => s.id === li.saleId);
 
   return (
     <div className="rounded-xl p-4 flex items-center justify-between gap-4" style={{ backgroundColor: '#FEF3C7', borderLeft: '4px solid #D97706' }}>
@@ -55,7 +57,7 @@ function OversellBanner() {
         <div>
           <p className="font-body text-sm font-bold" style={{ color: '#1A1A2E' }}>Oversell Detected — Approval Required</p>
           <p className="font-body text-sm" style={{ color: '#6B7280' }}>
-            Sale S250145 (Blend Group, Cat 2, 6 tickets) exceeds available inventory by 6 units.
+            Sale line {li.id.toUpperCase()} ({sale?.client}, {li.categoryLabel}, {li.qty} tickets) exceeds available inventory.
           </p>
         </div>
       </div>
@@ -110,7 +112,6 @@ function ActivityFeed() {
       <div className="p-5 space-y-0">
         {ACTIVITY_ITEMS.map((item, i) => (
           <div key={i} className="flex gap-3">
-            {/* Timeline */}
             <div className="flex flex-col items-center">
               <div className="w-2.5 h-2.5 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: item.dotColor }} />
               {i < ACTIVITY_ITEMS.length - 1 && <div className="w-px flex-1 my-1" style={{ backgroundColor: '#E5E7EB' }} />}
@@ -135,7 +136,7 @@ function UnallocatedSalesCard() {
       <table className="w-full text-left">
         <thead>
           <tr className="border-b" style={{ borderColor: '#E5E7EB' }}>
-            {['Sale ID', 'Client', 'Category', 'Qty', 'Action'].map(h => (
+            {['Line ID', 'Client', 'Category', 'Qty', 'Action'].map(h => (
               <th key={h} className="px-5 py-2.5 font-body text-[11px] font-medium uppercase tracking-wide" style={{ color: '#6B7280' }}>{h}</th>
             ))}
           </tr>
@@ -214,15 +215,15 @@ function OperatorView() {
           <tbody>
             <tr className="border-b" style={{ borderColor: '#F3F4F6' }}>
               <td className="px-5 py-3"><span className="badge-sent px-2 py-0.5 rounded-full font-body text-[11px]">Purchase</span></td>
-              <td className="px-5 py-3 font-mono text-[13px]" style={{ color: '#1A1A2E' }}>PUR-002</td>
-              <td className="px-5 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>viagogo Cat 2 x100</td>
-              <td className="px-5 py-3 font-mono text-[11px]" style={{ color: '#6B7280' }}>15 Apr 2026</td>
+              <td className="px-5 py-3 font-mono text-[13px]" style={{ color: '#1A1A2E' }}>PUR-001</td>
+              <td className="px-5 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>poxami — 3 lines, 203 units</td>
+              <td className="px-5 py-3 font-mono text-[11px]" style={{ color: '#6B7280' }}>16 Apr 2026</td>
             </tr>
             <tr>
               <td className="px-5 py-3"><span className="badge-available px-2 py-0.5 rounded-full font-body text-[11px]">Sale</span></td>
-              <td className="px-5 py-3 font-mono text-[13px]" style={{ color: '#1A1A2E' }}>S250145</td>
-              <td className="px-5 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>Blend Group Cat 2 x6</td>
-              <td className="px-5 py-3 font-mono text-[11px]" style={{ color: '#6B7280' }}>15 Apr 2026</td>
+              <td className="px-5 py-3 font-mono text-[13px]" style={{ color: '#1A1A2E' }}>SALE001</td>
+              <td className="px-5 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>Roadtrips — 3 lines, 38 units</td>
+              <td className="px-5 py-3 font-mono text-[11px]" style={{ color: '#6B7280' }}>16 Apr 2026</td>
             </tr>
           </tbody>
         </table>
@@ -239,30 +240,18 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* ROW 1: Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {STAT_CARDS.map((card, i) => (
-          <motion.div
-            key={card.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1, duration: 0.3 }}
-          >
+          <motion.div key={card.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1, duration: 0.3 }}>
             <StatCard {...card} />
           </motion.div>
         ))}
       </div>
-
-      {/* ROW 2: Oversell banner */}
       <OversellBanner />
-
-      {/* ROW 3: Inventory + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3"><InventoryHealthCard /></div>
         <div className="lg:col-span-2"><ActivityFeed /></div>
       </div>
-
-      {/* ROW 4: Unallocated + Dispatch */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3"><UnallocatedSalesCard /></div>
         <div className="lg:col-span-2"><DispatchDeadlinesCard /></div>
