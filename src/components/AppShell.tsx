@@ -3,6 +3,7 @@ import { Outlet, NavLink as RRNavLink, useLocation, useNavigate } from 'react-ro
 import { useAuth } from '@/context/AuthContext';
 import { useEvent } from '@/context/EventContext';
 import NotificationBell from '@/components/NotificationBell';
+import CommandPalette from '@/components/CommandPalette';
 import EventSwitcherModal from '@/components/EventSwitcherModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -179,6 +180,19 @@ export default function AppShell() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [eventModalOpen, setEventModalOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // ⌘K / Ctrl+K keyboard shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // Collapsed state for collapsible groups
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
