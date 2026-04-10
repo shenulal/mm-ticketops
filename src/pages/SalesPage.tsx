@@ -299,7 +299,7 @@ function SaleEditModal({ saleId, onClose, onSave }: {
               <div>
                 <label className="font-body text-sm font-medium text-foreground block mb-1">Client</label>
                 <select value={client} onChange={e => setClient(e.target.value)} className={inputCls}>
-                  {['Roadtrips', 'Blend Group', 'One2Travel', 'Al Habtoor'].map(c => <option key={c}>{c}</option>)}
+                  {['Meridian Travel', 'Apex Holdings', 'One2Travel', 'Al Habtoor'].map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
               <div>

@@ -189,14 +189,14 @@ const INITIAL_VENUES: Venue[] = [
 ];
 
 const INITIAL_VENDORS: Vendor[] = [
-  { id: 'vnd1', name: 'poxami', code: 'POXAMI', type: 'MARKETPLACE', website: 'poxami.com', primaryContactName: 'Clara Dufresne', primaryContactEmail: 'clara@poxami.com', primaryContactPhone: '+33 1 2345 6789', country: 'France', notes: 'Primary vendor for FIFA WC', isActive: true, logoUrl: '' },
-  { id: 'vnd2', name: 'viagogo', code: 'VIAGOGO', type: 'MARKETPLACE', website: 'viagogo.com', primaryContactName: 'J. Meester', primaryContactEmail: 'j.meester@viagogo.com', primaryContactPhone: '+41 22 345 6789', country: 'Switzerland', notes: 'Secondary vendor', isActive: true, logoUrl: '' },
-  { id: 'vnd3', name: 'StubHub', code: 'STUBHUB', type: 'MARKETPLACE', website: 'stubhub.com', primaryContactName: 'Account Manager', primaryContactEmail: 'accounts@stubhub.com', primaryContactPhone: '+1 415 555 0100', country: 'USA', notes: '', isActive: true, logoUrl: '' },
+  { id: 'vnd1', name: 'TicketVault', code: 'TICKETVAULT', type: 'MARKETPLACE', website: 'TicketVault.com', primaryContactName: 'Clara Dufresne', primaryContactEmail: 'clara@TicketVault.com', primaryContactPhone: '+33 1 2345 6789', country: 'France', notes: 'Primary vendor for FIFA WC', isActive: true, logoUrl: '' },
+  { id: 'vnd2', name: 'SeatWave', code: 'SEATWAVE', type: 'MARKETPLACE', website: 'SeatWave.com', primaryContactName: 'J. Meester', primaryContactEmail: 'j.meester@SeatWave.com', primaryContactPhone: '+41 22 345 6789', country: 'Switzerland', notes: 'Secondary vendor', isActive: true, logoUrl: '' },
+  { id: 'vnd3', name: 'FanPass', code: 'FANPASS', type: 'MARKETPLACE', website: 'fanpass.com', primaryContactName: 'Account Manager', primaryContactEmail: 'accounts@fanpass.com', primaryContactPhone: '+1 415 555 0100', country: 'USA', notes: '', isActive: true, logoUrl: '' },
 ];
 
 const INITIAL_CLIENTS: Client[] = [
-  { id: 'cl1', companyName: 'Roadtrips', code: 'RDTRP', type: 'AGENCY', primaryContactName: 'David Clarke', email: 'david@roadtrips.ae', phone: '+971 4 111 2233', country: 'UAE', city: 'Dubai', address: 'Business Bay, Dubai', taxId: 'TRN100001', paymentTerms: 'Net 30', creditLimit: 500000, notes: 'Long-term client', isActive: true, logoUrl: '' },
-  { id: 'cl2', companyName: 'Blend Group', code: 'BLEND', type: 'CORPORATE', primaryContactName: 'Sarah Mills', email: 'sarah@blendgroup.com', phone: '+971 4 222 3344', country: 'UAE', city: 'Abu Dhabi', address: 'Corniche Road, Abu Dhabi', taxId: 'TRN100002', paymentTerms: 'Net 15', creditLimit: 300000, notes: '', isActive: true, logoUrl: '' },
+  { id: 'cl1', companyName: 'Meridian Travel', code: 'MTRV', type: 'AGENCY', primaryContactName: 'David Clarke', email: 'david@meridiantravel.ae', phone: '+971 4 111 2233', country: 'UAE', city: 'Dubai', address: 'Business Bay, Dubai', taxId: 'TRN100001', paymentTerms: 'Net 30', creditLimit: 500000, notes: 'Long-term client', isActive: true, logoUrl: '' },
+  { id: 'cl2', companyName: 'Apex Holdings', code: 'APEX', type: 'CORPORATE', primaryContactName: 'Sarah Mills', email: 'sarah@apexholdings.com', phone: '+971 4 222 3344', country: 'UAE', city: 'Abu Dhabi', address: 'Corniche Road, Abu Dhabi', taxId: 'TRN100002', paymentTerms: 'Net 15', creditLimit: 300000, notes: '', isActive: true, logoUrl: '' },
   { id: 'cl3', companyName: 'One2Travel', code: 'O2T', type: 'AGENCY', primaryContactName: 'Ahmed Al Farsi', email: 'ahmed@one2travel.ae', phone: '+971 4 333 4455', country: 'UAE', city: 'Dubai', address: 'DIFC, Dubai', taxId: 'TRN100003', paymentTerms: 'Net 30', creditLimit: 200000, notes: '', isActive: true, logoUrl: '' },
   { id: 'cl4', companyName: 'Al Habtoor Group', code: 'AHG', type: 'CORPORATE', primaryContactName: 'Layla Al Habtoor', email: 'layla@alhabtoor.ae', phone: '+971 4 444 5566', country: 'UAE', city: 'Dubai', address: 'Al Habtoor City, Dubai', taxId: 'TRN100004', paymentTerms: 'Net 45', creditLimit: 1000000, notes: 'VIP client', isActive: true, logoUrl: '' },
 ];
@@ -209,15 +209,15 @@ const INITIAL_CONTRACTS: Contract[] = [
 ];
 
 const INITIAL_VENDOR_EVENT_BRIDGES: VendorEventBridge[] = [
-  { id: 'veb1', vendorId: 'vnd1', eventId: 'evt1', platformUrl: 'https://poxami.com/wc2026', loginEmail: 'clara@cc.WC#20', credentialHint: 'FIFA vendor portal', primaryContactForEvent: 'Clara Dufresne', notes: '', isActive: true },
-  { id: 'veb2', vendorId: 'vnd2', eventId: 'evt2', platformUrl: 'https://viagogo.com/f1sgp', loginEmail: 'j.meester@viagogo.com', credentialHint: 'F1 vendor login', primaryContactForEvent: 'J. Meester', notes: '', isActive: true },
+  { id: 'veb1', vendorId: 'vnd1', eventId: 'evt1', platformUrl: 'https://TicketVault.com/wc2026', loginEmail: 'clara@cc.WC#20', credentialHint: 'FIFA vendor portal', primaryContactForEvent: 'Clara Dufresne', notes: '', isActive: true },
+  { id: 'veb2', vendorId: 'vnd2', eventId: 'evt2', platformUrl: 'https://SeatWave.com/f1sgp', loginEmail: 'j.meester@SeatWave.com', credentialHint: 'F1 vendor login', primaryContactForEvent: 'J. Meester', notes: '', isActive: true },
 ];
 
 const INITIAL_VENDOR_CREDENTIALS: VendorCredential[] = [
-  { id: 'vc1', vendorId: 'vnd1', eventId: 'evt1', loginId: 'clara.wc2026', email: 'clara@poxami.com', passwordHash: 'P@ssw0rd!2026', active: true, notes: 'FIFA WC 2026 portal', updatedBy: 'Alex Thompson', updatedAt: '2026-03-15T10:30:00Z', createdAt: '2026-01-10T09:00:00Z' },
-  { id: 'vc2', vendorId: 'vnd1', eventId: null, loginId: 'poxami.global', email: 'ops@poxami.com', passwordHash: 'Gl0b@lAcc#99', active: true, notes: 'Global account for all events', updatedBy: 'Alex Thompson', updatedAt: '2026-02-20T14:00:00Z', createdAt: '2025-11-01T08:00:00Z' },
-  { id: 'vc3', vendorId: 'vnd2', eventId: 'evt2', loginId: 'viagogo.f1sgp', email: 'j.meester@viagogo.com', passwordHash: 'F1Sgp#2026!', active: true, notes: 'F1 Singapore GP credentials', updatedBy: 'Sara Chen', updatedAt: '2026-04-01T11:00:00Z', createdAt: '2026-03-01T10:00:00Z' },
-  { id: 'vc4', vendorId: 'vnd3', eventId: 'evt1', loginId: 'stubhub.fifa', email: 'accounts@stubhub.com', passwordHash: 'StUb#Fifa26', active: false, notes: 'Deactivated — contract ended', updatedBy: 'Sara Chen', updatedAt: '2026-03-30T16:00:00Z', createdAt: '2025-12-15T09:00:00Z' },
+  { id: 'vc1', vendorId: 'vnd1', eventId: 'evt1', loginId: 'clara.wc2026', email: 'clara@ticketvault.com', passwordHash: 'P@ssw0rd!2026', active: true, notes: 'FIFA WC 2026 portal', updatedBy: 'Alex Thompson', updatedAt: '2026-03-15T10:30:00Z', createdAt: '2026-01-10T09:00:00Z' },
+  { id: 'vc2', vendorId: 'vnd1', eventId: null, loginId: 'ticketvault.global', email: 'ops@ticketvault.com', passwordHash: 'Gl0b@lAcc#99', active: true, notes: 'Global account for all events', updatedBy: 'Alex Thompson', updatedAt: '2026-02-20T14:00:00Z', createdAt: '2025-11-01T08:00:00Z' },
+  { id: 'vc3', vendorId: 'vnd2', eventId: 'evt2', loginId: 'seatwave.f1sgp', email: 'j.meester@seatwave.com', passwordHash: 'F1Sgp#2026!', active: true, notes: 'F1 Singapore GP credentials', updatedBy: 'Sara Chen', updatedAt: '2026-04-01T11:00:00Z', createdAt: '2026-03-01T10:00:00Z' },
+  { id: 'vc4', vendorId: 'vnd3', eventId: 'evt1', loginId: 'fanpass.fifa', email: 'accounts@fanpass.com', passwordHash: 'StUb#Fifa26', active: false, notes: 'Deactivated — contract ended', updatedBy: 'Sara Chen', updatedAt: '2026-03-30T16:00:00Z', createdAt: '2025-12-15T09:00:00Z' },
 ];
 
 const INITIAL_CREDENTIAL_HISTORY: CredentialHistoryEntry[] = [
@@ -225,7 +225,7 @@ const INITIAL_CREDENTIAL_HISTORY: CredentialHistoryEntry[] = [
   { id: 'ch2', credentialId: 'vc1', action: 'UPDATED', actor: 'Alex Thompson', timestamp: '2026-03-15T10:30:00Z', details: 'Password updated' },
   { id: 'ch3', credentialId: 'vc2', action: 'CREATED', actor: 'Alex Thompson', timestamp: '2025-11-01T08:00:00Z', details: 'Global credential created' },
   { id: 'ch4', credentialId: 'vc3', action: 'CREATED', actor: 'Sara Chen', timestamp: '2026-03-01T10:00:00Z', details: 'F1 Singapore credential created' },
-  { id: 'ch5', credentialId: 'vc4', action: 'CREATED', actor: 'Sara Chen', timestamp: '2025-12-15T09:00:00Z', details: 'StubHub FIFA credential created' },
+  { id: 'ch5', credentialId: 'vc4', action: 'CREATED', actor: 'Sara Chen', timestamp: '2025-12-15T09:00:00Z', details: 'FanPass FIFA credential created' },
   { id: 'ch6', credentialId: 'vc4', action: 'DEACTIVATED', actor: 'Sara Chen', timestamp: '2026-03-30T16:00:00Z', details: 'Contract ended — credential deactivated' },
 ];
 
@@ -257,14 +257,14 @@ const INITIAL_NOTIFICATION_TRIGGERS: NotificationTrigger[] = [
 ];
 
 const INITIAL_NOTIFICATION_LOG: NotificationLogEntry[] = [
-  { id: 'nl1', templateId: 'nt1', triggerId: 'trg1', eventType: 'oversell.raised', payload: { 'sale.code': 'S-2026-003', 'client.name': 'Roadtrips', 'category': 'Top Cat 1', 'match.name': 'MEX v RSA' }, recipients: ['Sara Al Mansoori'], channel: 'email', sentAt: '2026-04-08T14:22:00Z', status: 'sent', retryCount: 0 },
-  { id: 'nl2', templateId: 'nt1', triggerId: 'trg1', eventType: 'oversell.raised', payload: { 'sale.code': 'S-2026-003', 'client.name': 'Roadtrips', 'category': 'Top Cat 1', 'match.name': 'MEX v RSA' }, recipients: ['Sara Al Mansoori'], channel: 'in_app', sentAt: '2026-04-08T14:22:01Z', status: 'sent', retryCount: 0 },
-  { id: 'nl3', templateId: 'nt7', triggerId: 'trg7', eventType: 'sale.created', payload: { 'sale.code': 'S-2026-004', 'client.name': 'Blend Group', 'actor.name': 'James Patel', 'sale.totalValue': 'AED 180,000' }, recipients: ['Sara Al Mansoori'], channel: 'email', sentAt: '2026-04-07T10:15:00Z', status: 'sent', retryCount: 0 },
-  { id: 'nl4', templateId: 'nt2', triggerId: 'trg2', eventType: 'portal.generated', payload: { 'client.name': 'Roadtrips', 'match.name': 'MEX v RSA', 'portal.url': 'https://portal.ticketops.ae/abc123', 'portal.deadline': '15 Jun 2026', 'event.name': 'FIFA WC 2026' }, recipients: ['David Clarke'], channel: 'email', sentAt: '2026-04-06T09:00:00Z', status: 'sent', retryCount: 0 },
+  { id: 'nl1', templateId: 'nt1', triggerId: 'trg1', eventType: 'oversell.raised', payload: { 'sale.code': 'S-2026-003', 'client.name': 'Meridian Travel', 'category': 'Top Cat 1', 'match.name': 'MEX v RSA' }, recipients: ['Sara Al Mansoori'], channel: 'email', sentAt: '2026-04-08T14:22:00Z', status: 'sent', retryCount: 0 },
+  { id: 'nl2', templateId: 'nt1', triggerId: 'trg1', eventType: 'oversell.raised', payload: { 'sale.code': 'S-2026-003', 'client.name': 'Meridian Travel', 'category': 'Top Cat 1', 'match.name': 'MEX v RSA' }, recipients: ['Sara Al Mansoori'], channel: 'in_app', sentAt: '2026-04-08T14:22:01Z', status: 'sent', retryCount: 0 },
+  { id: 'nl3', templateId: 'nt7', triggerId: 'trg7', eventType: 'sale.created', payload: { 'sale.code': 'S-2026-004', 'client.name': 'Apex Holdings', 'actor.name': 'James Patel', 'sale.totalValue': 'AED 180,000' }, recipients: ['Sara Al Mansoori'], channel: 'email', sentAt: '2026-04-07T10:15:00Z', status: 'sent', retryCount: 0 },
+  { id: 'nl4', templateId: 'nt2', triggerId: 'trg2', eventType: 'portal.generated', payload: { 'client.name': 'Meridian Travel', 'match.name': 'MEX v RSA', 'portal.url': 'https://portal.ticketops.ae/abc123', 'portal.deadline': '15 Jun 2026', 'event.name': 'FIFA WC 2026' }, recipients: ['David Clarke'], channel: 'email', sentAt: '2026-04-06T09:00:00Z', status: 'sent', retryCount: 0 },
   { id: 'nl5', templateId: 'nt5', triggerId: 'trg5', eventType: 'dispatch.ticket_unsent_T_minus_65d', payload: { 'count': '12', 'match.name': 'USA v CAN', 'days': '65' }, recipients: ['Sara Al Mansoori'], channel: 'email', sentAt: '2026-04-05T08:00:00Z', status: 'failed', error: 'SMTP timeout after 30s', retryCount: 3 },
   { id: 'nl6', templateId: 'nt9', triggerId: 'trg9', eventType: 'event.transition', payload: { 'event.name': 'FIFA WC 2026', 'event.oldStatus': 'BUYING', 'event.newStatus': 'SELLING', 'actor.name': 'Sara Al Mansoori' }, recipients: ['Sara Al Mansoori', 'Alex Rahman'], channel: 'slack', sentAt: '2026-04-01T11:30:00Z', status: 'sent', retryCount: 0 },
-  { id: 'nl7', templateId: 'nt6', triggerId: 'trg6', eventType: 'allocation.committed', payload: { 'count': '8', 'client.name': 'Roadtrips', 'sale.code': 'S-2026-001', 'allocation.note': 'Consecutive block A12-A19' }, recipients: ['James Patel'], channel: 'in_app', sentAt: '2026-04-03T16:45:00Z', status: 'sent', retryCount: 0 },
-  { id: 'nl8', templateId: 'nt8', triggerId: 'trg8', eventType: 'credential.updated', payload: { 'vendor.name': 'poxami', 'actor.name': 'Alex Rahman', 'credential.loginId': 'clara.wc2026' }, recipients: ['Sara Al Mansoori'], channel: 'in_app', sentAt: '2026-04-02T13:20:00Z', status: 'sent', retryCount: 0 },
+  { id: 'nl7', templateId: 'nt6', triggerId: 'trg6', eventType: 'allocation.committed', payload: { 'count': '8', 'client.name': 'Meridian Travel', 'sale.code': 'S-2026-001', 'allocation.note': 'Consecutive block A12-A19' }, recipients: ['James Patel'], channel: 'in_app', sentAt: '2026-04-03T16:45:00Z', status: 'sent', retryCount: 0 },
+  { id: 'nl8', templateId: 'nt8', triggerId: 'trg8', eventType: 'credential.updated', payload: { 'vendor.name': 'TicketVault', 'actor.name': 'Alex Rahman', 'credential.loginId': 'clara.wc2026' }, recipients: ['Sara Al Mansoori'], channel: 'in_app', sentAt: '2026-04-02T13:20:00Z', status: 'sent', retryCount: 0 },
 ];
 
 function cat(id: string, displayName: string, level: number, hint = ''): SubGameCategory {

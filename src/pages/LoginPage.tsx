@@ -17,9 +17,9 @@ const DEMO_ACCOUNTS = [
     badgeBg: 'rgba(20,184,166,0.2)', badgeBorder: 'rgba(20,184,166,0.4)', badgeText: '#99F6E4' },
   { email: 'staff@ticketops.ae', name: 'Mohammed Hassan', badge: 'Staff',
     badgeBg: 'rgba(245,158,11,0.2)', badgeBorder: 'rgba(245,158,11,0.4)', badgeText: '#FDE68A' },
-  { email: 'client@roadtrips.ae', name: 'David Clarke', badge: 'Client',
+  { email: 'client@meridiantravel.ae', name: 'David Clarke', badge: 'Client',
     badgeBg: 'rgba(34,197,94,0.2)', badgeBorder: 'rgba(34,197,94,0.4)', badgeText: '#86EFAC' },
-  { email: 'supplier@poxami.com', name: 'Clara Dufresne', badge: 'Supplier',
+  { email: 'supplier@ticketvault.com', name: 'Clara Dufresne', badge: 'Supplier',
     badgeBg: 'rgba(249,115,22,0.2)', badgeBorder: 'rgba(249,115,22,0.4)', badgeText: '#FDBA74' },
 ];
 

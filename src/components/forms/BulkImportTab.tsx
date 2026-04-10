@@ -205,7 +205,7 @@ export default function BulkImportTab({ mode }: Props) {
           {/* Manual paste fallback */}
           <div>
             <label className="block font-body text-xs font-medium text-foreground mb-1.5">Or paste CSV text directly:</label>
-            <textarea rows={5} placeholder={expectedCols.join(',') + '\nM01,poxami,2025-100129,AED,Top Cat 1,10,27525,Block C'}
+            <textarea rows={5} placeholder={expectedCols.join(',') + '\nM01,TicketVault,2025-100129,AED,Top Cat 1,10,27525,Block C'}
               className="w-full px-3 py-2.5 rounded-lg font-mono text-xs border border-border outline-none focus:ring-1 focus:ring-accent bg-card resize-none"
               onBlur={e => {
                 if (e.target.value.trim()) {

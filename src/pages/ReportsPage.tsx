@@ -598,7 +598,7 @@ function OversellAlerts() {
         <tbody>
           <tr>
             <td className="px-5 py-3 font-mono text-xs font-bold" style={{ color: '#0B2D5E' }}>SALE-001 / L2</td>
-            <td className="px-5 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>Roadtrips</td>
+            <td className="px-5 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>Meridian Travel</td>
             <td className="px-5 py-3 font-body text-[13px]" style={{ color: '#1A1A2E' }}>Cat 2</td>
             <td className="px-5 py-3 font-mono text-[13px]" style={{ color: '#1A1A2E' }}>6</td>
             <td className="px-5 py-3 font-mono text-[13px] font-bold" style={{ color: '#DC2626' }}>6</td>

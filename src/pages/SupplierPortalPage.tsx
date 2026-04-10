@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Lock, CheckCircle } from 'lucide-react';
 
 const ROWS = [
-  { invNo: '630679135', match: 'M01', category: 'Top Cat 1', seat: 'Block A', guest: 'John Smith', email: 'john.smith@roadtrips.ae', status: 'SENT' },
-  { invNo: '630679136', match: 'M01', category: 'Top Cat 1', seat: 'Block A', guest: 'Emma Watson', email: 'emma.w@roadtrips.ae', status: 'NOT_SENT' },
+  { invNo: '630679135', match: 'M01', category: 'Top Cat 1', seat: 'Block A', guest: 'John Smith', email: 'john.smith@meridiantravel.ae', status: 'SENT' },
+  { invNo: '630679136', match: 'M01', category: 'Top Cat 1', seat: 'Block A', guest: 'Emma Watson', email: 'emma.w@meridiantravel.ae', status: 'NOT_SENT' },
   { invNo: '630679137', match: 'M01', category: 'Top Cat 1', seat: 'Block A', guest: '', email: '', status: 'NOT_SENT', awaiting: true },
   { invNo: '630679138', match: 'M01', category: 'Top Cat 1', seat: 'Block A', guest: '', email: '', status: 'NOT_SENT', awaiting: true },
   { invNo: '630679139', match: 'M01', category: 'Top Cat 1', seat: 'Block A', guest: '', email: '', status: 'NOT_SENT', awaiting: true },
@@ -26,7 +26,7 @@ export default function SupplierPortalPage() {
         </div>
         <span className="font-body text-[15px]" style={{ color: '#6B7280' }}>Supplier Dispatch Portal</span>
         <div className="flex items-center gap-3">
-          <span className="px-2.5 py-1 rounded-full font-body text-[11px] font-bold" style={{ backgroundColor: '#0B2D5E', color: 'white' }}>poxami</span>
+          <span className="px-2.5 py-1 rounded-full font-body text-[11px] font-bold" style={{ backgroundColor: '#0B2D5E', color: 'white' }}>TicketVault</span>
           <span className="font-body text-[13px]" style={{ color: '#6B7280' }}>Session: 12d 4h remaining</span>
         </div>
       </header>

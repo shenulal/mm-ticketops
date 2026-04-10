@@ -311,7 +311,7 @@ export default function ClientPortalPage() {
   const totalValue = sale.lines.reduce((s, l) => s + l.lineTotal, 0);
 
   // Client name based on sale
-  const clientName = saleId === 'sale002' ? 'Blend Group' : 'David Clarke';
+  const clientName = saleId === 'sale002' ? 'Apex Holdings' : 'David Clarke';
 
   if (submitted) {
     return (

@@ -235,7 +235,7 @@ export default function ManagerDashboard() {
 
         {/* Row 4: Funnel + Client Revenue */}
         <div className="grid grid-cols-2 gap-6">
-          <ChartCard title="Client Portal Funnel" subtitle="Roadtrips — SALE-001" height={220}>
+          <ChartCard title="Client Portal Funnel" subtitle="Meridian Travel — SALE-001" height={220}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={funnelData} layout="vertical">
                 <XAxis type="number" tick={{ fontSize: 11, fill: '#6B7280' }} />

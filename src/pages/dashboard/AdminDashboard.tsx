@@ -237,7 +237,7 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Client Portal Funnel" subtitle="Roadtrips — SALE-001" height={240}>
+          <ChartCard title="Client Portal Funnel" subtitle="Meridian Travel — SALE-001" height={240}>
             {funnelData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={funnelData} layout="vertical">

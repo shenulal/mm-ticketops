@@ -15,8 +15,8 @@ export const MOCK_USERS: AppUser[] = [
   { id: 'u3', name: 'James Patel', email: 'sroperator@ticketops.ae', role: 'sr_operator', initials: 'JP' },
   { id: 'u4', name: 'Priya Nair', email: 'operator@ticketops.ae', role: 'operator', initials: 'PN' },
   { id: 'u5', name: 'Mohammed Hassan', email: 'staff@ticketops.ae', role: 'staff', initials: 'MH' },
-  { id: 'u6', name: 'David Clarke', email: 'client@roadtrips.ae', role: 'client', initials: 'DC' },
-  { id: 'u7', name: 'Clara Dufresne', email: 'supplier@poxami.com', role: 'supplier', initials: 'CD', vendorGroups: ['poxami'] },
+  { id: 'u6', name: 'David Clarke', email: 'client@meridiantravel.ae', role: 'client', initials: 'DC' },
+  { id: 'u7', name: 'Clara Dufresne', email: 'supplier@ticketvault.com', role: 'supplier', initials: 'CD', vendorGroups: ['TicketVault'] },
 ];
 
 export const MOCK_EVENTS = [
@@ -171,14 +171,14 @@ export interface Purchase {
 
 export const MOCK_PURCHASES: Purchase[] = [
   {
-    id: 'pur1', vendor: 'poxami', contract: '2025-100129', matchId: 'm01',
+    id: 'pur1', vendor: 'TicketVault', contract: '2025-100129', matchId: 'm01',
     date: '16 Apr 2026', notes: 'Full block from venue section C', status: 'ACTIVE',
     get lines() { return MOCK_PURCHASE_LINE_ITEMS.filter(l => l.purchaseId === 'pur1'); },
     get totalQty() { return this.lines.reduce((s, l) => s + l.qty, 0); },
     get totalValue() { return this.lines.reduce((s, l) => s + l.lineTotal, 0); },
   },
   {
-    id: 'pur2', vendor: 'viagogo', contract: '2025-100888', matchId: 'sg-weekend',
+    id: 'pur2', vendor: 'SeatWave', contract: '2025-100888', matchId: 'sg-weekend',
     date: '16 Apr 2026', notes: 'F1 Singapore block booking', status: 'ACTIVE',
     get lines() { return MOCK_PURCHASE_LINE_ITEMS.filter(l => l.purchaseId === 'pur2'); },
     get totalQty() { return this.lines.reduce((s, l) => s + l.qty, 0); },
@@ -226,7 +226,7 @@ export interface Sale {
 
 export const MOCK_SALES: Sale[] = [
   {
-    id: 'sale001', client: 'Roadtrips', contract: '2025-10885', matchId: 'm01',
+    id: 'sale001', client: 'Meridian Travel', contract: '2025-10885', matchId: 'm01',
     date: '16 Apr 2026', notes: '',
     get lines() { return MOCK_SALE_LINE_ITEMS.filter(l => l.saleId === 'sale001'); },
     get totalQty() { return this.lines.reduce((s, l) => s + l.qty, 0); },
@@ -240,7 +240,7 @@ export const MOCK_SALES: Sale[] = [
     },
   },
   {
-    id: 'sale002', client: 'Blend Group', contract: '2025-20001', matchId: 'sg-weekend',
+    id: 'sale002', client: 'Apex Holdings', contract: '2025-20001', matchId: 'sg-weekend',
     date: '16 Apr 2026', notes: 'F1 Singapore package',
     get lines() { return MOCK_SALE_LINE_ITEMS.filter(l => l.saleId === 'sale002'); },
     get totalQty() { return this.lines.reduce((s, l) => s + l.qty, 0); },
@@ -275,7 +275,7 @@ export const MOCK_UNITS: PurchaseUnit[] = [
     purchaseId: 'pur1', lineItemId: 'pli-1-1',
     subGameId: 'sg-m01-main', categoryId: 'topcat1', categoryLabel: 'Top Cat 1',
     setId: 'PR001-L1-S01', setSize: 43, setPos: i + 1,
-    vendor: 'poxami', contract: '2025-100129', matchId: 'm01',
+    vendor: 'TicketVault', contract: '2025-100129', matchId: 'm01',
     status: (i < 12 ? 'ALLOCATED' : 'AVAILABLE') as 'ALLOCATED' | 'AVAILABLE',
     allocatedToLineItemId: i < 12 ? 'sli-1-1' : null,
   })),
@@ -285,7 +285,7 @@ export const MOCK_UNITS: PurchaseUnit[] = [
     purchaseId: 'pur1', lineItemId: 'pli-1-2',
     subGameId: 'sg-m01-main', categoryId: 'cat2', categoryLabel: 'Cat 2',
     setId: 'PR001-L2-S01', setSize: 100, setPos: i + 1,
-    vendor: 'poxami', contract: '2025-100129', matchId: 'm01',
+    vendor: 'TicketVault', contract: '2025-100129', matchId: 'm01',
     status: (i < 6 ? 'ALLOCATED' : 'AVAILABLE') as 'ALLOCATED' | 'AVAILABLE',
     allocatedToLineItemId: i < 6 ? 'sli-1-2' : null,
   })),
@@ -295,7 +295,7 @@ export const MOCK_UNITS: PurchaseUnit[] = [
     purchaseId: 'pur1', lineItemId: 'pli-1-3',
     subGameId: 'sg-m01-main', categoryId: 'cat3', categoryLabel: 'Cat 3',
     setId: 'PR001-L3-S01', setSize: 60, setPos: i + 1,
-    vendor: 'poxami', contract: '2025-100129', matchId: 'm01',
+    vendor: 'TicketVault', contract: '2025-100129', matchId: 'm01',
     status: (i < 20 ? 'ALLOCATED' : 'AVAILABLE') as 'ALLOCATED' | 'AVAILABLE',
     allocatedToLineItemId: i < 20 ? 'sli-1-3' : null,
   })),
@@ -328,7 +328,7 @@ export const MOCK_DIST_ROWS: DistRow[] = [
     status: i === 0 ? 'SENT' : 'NOT_SENT',
     clientFirstName: i === 0 ? 'John' : '',
     clientLastName: i === 0 ? 'Smith' : '',
-    clientEmail: i === 0 ? 'john.smith@roadtrips.ae' : '',
+    clientEmail: i === 0 ? 'john.smith@meridiantravel.ae' : '',
     dispatchStatus: i === 0 ? 'SENT' : 'NOT_SENT',
   })),
   // SALE-001, Line 2: Cat 2 × 6 (oversold)
@@ -562,9 +562,9 @@ export interface StaffTask {
 
 export const MOCK_STAFF_TASKS: StaffTask[] = [
   {
-    id: 'tq1', saleChildId: 's250132-1', unitId: 'P00001', vendor: 'poxami', invNo: '630679135',
-    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@poxami.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
-    clientFirstName: 'John', clientLastName: 'Smith', clientEmail: 'john.smith@roadtrips.ae', clientPhone: '+971 50 123 4567', clientNotes: 'VIP – ensure early delivery',
+    id: 'tq1', saleChildId: 's250132-1', unitId: 'P00001', vendor: 'TicketVault', invNo: '630679135',
+    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@ticketvault.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
+    clientFirstName: 'John', clientLastName: 'Smith', clientEmail: 'john.smith@meridiantravel.ae', clientPhone: '+971 50 123 4567', clientNotes: 'VIP – ensure early delivery',
     matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
     block: 'C', row: '12', seat: '14',
     assignedTo: 'u5', status: 'SENT', priority: 'High', dispatchedAt: '17 Apr 2026 14:32', proofUrl: '/proof/tq1.pdf', staffNote: '',
@@ -575,9 +575,9 @@ export const MOCK_STAFF_TASKS: StaffTask[] = [
     ],
   },
   {
-    id: 'tq2', saleChildId: 's250132-2', unitId: 'P00002', vendor: 'poxami', invNo: '630679136',
-    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@poxami.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
-    clientFirstName: 'Emma', clientLastName: 'Watson', clientEmail: 'emma.w@roadtrips.ae', clientPhone: '+971 50 234 5678', clientNotes: '',
+    id: 'tq2', saleChildId: 's250132-2', unitId: 'P00002', vendor: 'TicketVault', invNo: '630679136',
+    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@ticketvault.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
+    clientFirstName: 'Emma', clientLastName: 'Watson', clientEmail: 'emma.w@meridiantravel.ae', clientPhone: '+971 50 234 5678', clientNotes: '',
     matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
     block: 'C', row: '12', seat: '15',
     assignedTo: 'u5', status: 'NOT_SENT', priority: 'Normal', dispatchedAt: null, proofUrl: null, staffNote: '',
@@ -587,9 +587,9 @@ export const MOCK_STAFF_TASKS: StaffTask[] = [
     ],
   },
   {
-    id: 'tq3', saleChildId: 's250132-3', unitId: 'P00003', vendor: 'poxami', invNo: '630679137',
-    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@poxami.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
-    clientFirstName: 'Robert', clientLastName: 'Chen', clientEmail: 'r.chen@roadtrips.ae', clientPhone: '', clientNotes: 'Wheelchair accessible required',
+    id: 'tq3', saleChildId: 's250132-3', unitId: 'P00003', vendor: 'TicketVault', invNo: '630679137',
+    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@ticketvault.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
+    clientFirstName: 'Robert', clientLastName: 'Chen', clientEmail: 'r.chen@meridiantravel.ae', clientPhone: '', clientNotes: 'Wheelchair accessible required',
     matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
     block: '', row: '', seat: '',
     assignedTo: 'u5', status: 'NOT_SENT', priority: 'High', dispatchedAt: null, proofUrl: null, staffNote: '',
@@ -599,9 +599,9 @@ export const MOCK_STAFF_TASKS: StaffTask[] = [
     ],
   },
   {
-    id: 'tq4', saleChildId: 's250132-4', unitId: 'P00004', vendor: 'poxami', invNo: '630679138',
-    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@poxami.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
-    clientFirstName: 'Aisha', clientLastName: 'Al Kabi', clientEmail: 'aisha@roadtrips.ae', clientPhone: '+971 55 987 6543', clientNotes: '',
+    id: 'tq4', saleChildId: 's250132-4', unitId: 'P00004', vendor: 'TicketVault', invNo: '630679138',
+    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@ticketvault.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
+    clientFirstName: 'Aisha', clientLastName: 'Al Kabi', clientEmail: 'aisha@meridiantravel.ae', clientPhone: '+971 55 987 6543', clientNotes: '',
     matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
     block: 'C', row: '12', seat: '17',
     assignedTo: 'u5', status: 'PENDING', priority: 'Normal', dispatchedAt: null, proofUrl: null, staffNote: '',
@@ -612,9 +612,9 @@ export const MOCK_STAFF_TASKS: StaffTask[] = [
     ],
   },
   {
-    id: 'tq5', saleChildId: 's250132-5', unitId: 'P00005', vendor: 'poxami', invNo: '630679139',
-    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@poxami.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
-    clientFirstName: 'Tom', clientLastName: 'Williams', clientEmail: 'tom.w@roadtrips.ae', clientPhone: '', clientNotes: '',
+    id: 'tq5', saleChildId: 's250132-5', unitId: 'P00005', vendor: 'TicketVault', invNo: '630679139',
+    vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@ticketvault.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
+    clientFirstName: 'Tom', clientLastName: 'Williams', clientEmail: 'tom.w@meridiantravel.ae', clientPhone: '', clientNotes: '',
     matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
     block: 'C', row: '13', seat: '1',
     assignedTo: 'u5', status: 'ISSUE', priority: 'High', dispatchedAt: null, proofUrl: null, staffNote: 'Vendor site showing sold out — escalated',

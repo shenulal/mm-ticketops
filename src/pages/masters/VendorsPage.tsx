@@ -305,7 +305,7 @@ function AssignToEventForm({ vendorId, assignedEventIds, onDone }: { vendorId: s
         </select>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><label className="text-[11px] font-body text-muted-foreground">Platform URL *</label><input className={inputCls} value={platformUrl} onChange={e => setPlatformUrl(e.target.value)} placeholder="viagogo.com" /></div>
+        <div><label className="text-[11px] font-body text-muted-foreground">Platform URL *</label><input className={inputCls} value={platformUrl} onChange={e => setPlatformUrl(e.target.value)} placeholder="seatwave.com" /></div>
         <div><label className="text-[11px] font-body text-muted-foreground">Login Email *</label><input className={inputCls} value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="user@platform.com" /></div>
       </div>
       <div><label className="text-[11px] font-body text-muted-foreground">Credential Hint</label><input className={inputCls} value={credentialHint} onChange={e => setCredentialHint(e.target.value)} placeholder="Password format: [name].WC#[year]" /></div>
@@ -342,14 +342,14 @@ function VendorForm({ onClose }: { onClose: () => void }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Vendor Name" required error={errors.name}><input className={inputCls} value={form.name} onChange={e => upd('name', e.target.value)} placeholder="e.g. StubHub" /></FormField>
-        <FormField label="Vendor Code" required error={errors.code}><input className={inputCls} value={form.code} onChange={e => upd('code', e.target.value.toUpperCase())} placeholder="e.g. STUBHUB" /></FormField>
+        <FormField label="Vendor Name" required error={errors.name}><input className={inputCls} value={form.name} onChange={e => upd('name', e.target.value)} placeholder="e.g. FanPass" /></FormField>
+        <FormField label="Vendor Code" required error={errors.code}><input className={inputCls} value={form.code} onChange={e => upd('code', e.target.value.toUpperCase())} placeholder="e.g. FANPASS" /></FormField>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <FormField label="Type" required><select className={selectCls} value={form.type} onChange={e => upd('type', e.target.value)}><option value="MARKETPLACE">Marketplace</option><option value="DIRECT">Direct</option><option value="AGENCY">Agency</option></select></FormField>
         <FormField label="Country"><input className={inputCls} value={form.country} onChange={e => upd('country', e.target.value)} placeholder="e.g. France" /></FormField>
       </div>
-      <FormField label="Website"><input className={inputCls} value={form.website} onChange={e => upd('website', e.target.value)} placeholder="e.g. stubhub.com" /></FormField>
+      <FormField label="Website"><input className={inputCls} value={form.website} onChange={e => upd('website', e.target.value)} placeholder="e.g. fanpass.com" /></FormField>
       <div className="grid grid-cols-2 gap-4">
         <FormField label="Primary Contact Name" required error={errors.primaryContactName}><input className={inputCls} value={form.primaryContactName} onChange={e => upd('primaryContactName', e.target.value)} /></FormField>
         <FormField label="Email" required error={errors.primaryContactEmail}><input className={inputCls} type="email" value={form.primaryContactEmail} onChange={e => upd('primaryContactEmail', e.target.value)} /></FormField>

@@ -663,7 +663,7 @@ function IntegrationsSection() {
   const [showWebhook, setShowWebhook] = useState(false);
 
   const FUTURE = [
-    { name: 'viagogo API', phase: 'Phase 2' },
+    { name: 'SeatWave API', phase: 'Phase 2' },
     { name: 'Salesforce CRM', phase: 'Phase 3' },
     { name: 'QuickBooks Finance', phase: 'Phase 3' },
     { name: 'WhatsApp Business', phase: 'Phase 2' },

@@ -16,7 +16,7 @@ interface Notification {
 
 const INITIAL_NOTIFICATIONS: Notification[] = [
   { id: 'n1', type: 'error', title: 'Oversell Alert', time: '2 mins ago', body: 'Sale S250145 requires manager approval — Cat 2 oversold', link: '/sales', linkLabel: 'Review →', read: false },
-  { id: 'n2', type: 'warning', title: 'Portal Submitted', time: '1 hour ago', body: 'Roadtrips submitted guest details for S250132 (12 tickets)', link: '/client-portal/demo-token-123', linkLabel: 'View Portal →', read: false },
+  { id: 'n2', type: 'warning', title: 'Portal Submitted', time: '1 hour ago', body: 'Meridian Travel submitted guest details for S250132 (12 tickets)', link: '/client-portal/demo-token-123', linkLabel: 'View Portal →', read: false },
   { id: 'n3', type: 'info', title: 'Dispatch Deadline', time: 'Today', body: 'M01 — 11 tickets not yet dispatched. 47 days to event.', link: '/staff-queue', linkLabel: 'View Queue →', read: false },
 ];
 

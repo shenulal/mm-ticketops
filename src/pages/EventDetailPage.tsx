@@ -586,7 +586,7 @@ function VendorTab({ event }: { event: EventDef }) {
             </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="text-[11px] font-body text-muted-foreground">Platform URL *</label><Input className="mt-1" value={platformUrl} onChange={e => setPlatformUrl(e.target.value)} placeholder="viagogo.com" /></div>
+            <div><label className="text-[11px] font-body text-muted-foreground">Platform URL *</label><Input className="mt-1" value={platformUrl} onChange={e => setPlatformUrl(e.target.value)} placeholder="seatwave.com" /></div>
             <div><label className="text-[11px] font-body text-muted-foreground">Login Email *</label><Input className="mt-1" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} /></div>
           </div>
           <div><label className="text-[11px] font-body text-muted-foreground">Credential Hint</label><Input className="mt-1" value={credentialHint} onChange={e => setCredentialHint(e.target.value)} placeholder="Password format hint" /></div>
