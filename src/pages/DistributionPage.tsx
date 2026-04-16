@@ -466,6 +466,22 @@ export default function DistributionPage() {
                         ))}
                       </div>
 
+                      {/* Vendor Inventory Summary */}
+                      {vendorInventory.length > 0 && (
+                        <div className="rounded-lg p-3 border border-border bg-card space-y-2">
+                          <p className="font-body text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Inventory by Vendor</p>
+                          {vendorInventory.map(vi => (
+                            <div key={vi.vendor} className="flex items-center justify-between">
+                              <span className="font-body text-[13px] font-medium text-foreground">{vi.vendor}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[12px] text-success font-bold">{vi.availableUnits} avail</span>
+                                <span className="font-body text-[10px] text-muted-foreground">Sets: {vi.setBreakdown}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Section B: Vendor Blocks */}
                       <div>
                         <div className="flex items-center gap-2 mb-3">
