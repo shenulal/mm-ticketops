@@ -355,7 +355,21 @@ export default function DistributionPage() {
                                 <td className="px-4 py-2">
                                   <span className={`px-1.5 py-0.5 rounded-full font-body text-[9px] font-medium ${drSt.cls}`}>{drSt.label}</span>
                                 </td>
-                                <td className="px-4 py-2 font-mono text-[11px] text-foreground">{dr.unitId || '—'}</td>
+                                <td className="px-4 py-2">
+                                  {dr.unitId ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-mono text-[11px] text-foreground">{dr.unitId}</span>
+                                      {(() => {
+                                        const unit = MOCK_UNITS.find(u => u.id === dr.unitId);
+                                        return unit ? (
+                                          <span className="font-mono text-[9px] text-muted-foreground">
+                                            {unit.vendor} · {unit.setId}{unit.block ? ` · ${unit.block}-${unit.row}-${unit.seat}` : ''}
+                                          </span>
+                                        ) : null;
+                                      })()}
+                                    </div>
+                                  ) : <span className="font-mono text-[11px] text-muted-foreground">—</span>}
+                                </td>
                                 <td className="px-4 py-2">
                                   <span className={`px-1.5 py-0.5 rounded-full font-body text-[9px] font-medium ${dispSt.cls}`}>{dispSt.label}</span>
                                 </td>
