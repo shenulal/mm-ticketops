@@ -228,6 +228,7 @@ function SaleEditModal({ saleId, onClose, onSave }: {
   const [removeConfirm, setRemoveConfirm] = useState<string | null>(null);
   const [client, setClient] = useState('');
   const [contract, setContract] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [date, setDate] = useState('');
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState<EditSaleLineState[]>([]);
@@ -237,7 +238,7 @@ function SaleEditModal({ saleId, onClose, onSave }: {
   if (!sale) return null;
 
   if (!initialized) {
-    setClient(sale.client); setContract(sale.contract); setDate(sale.date); setNotes(sale.notes);
+    setClient(sale.client); setContract(sale.contract); setInvoiceNumber(sale.invoiceNumber); setDate(sale.date); setNotes(sale.notes);
     setLines(sale.lines.map(l => {
       const distRows = MOCK_DIST_ROWS.filter(dr => dr.lineItemId === l.id);
       const dispatched = distRows.filter(dr => dr.dispatchStatus === 'SENT').length;
@@ -533,7 +534,7 @@ export default function SalesPage() {
           <table className="w-full text-left min-w-[1050px]">
             <thead>
               <tr className="bg-primary h-[44px]">
-                {['', 'Sale ID', 'Date', 'Match', 'Client', 'Contract', 'Lines', 'Total Qty', 'Total Value', 'Status', 'Actions'].map(h => (
+                {['', 'Sale ID', 'Date', 'Match', 'Client', 'Contract / Invoice', 'Lines', 'Total Qty', 'Total Value', 'Status', 'Actions'].map(h => (
                   <th key={h} className="px-4 py-2.5 font-body text-[13px] font-bold text-primary-foreground">{h}</th>
                 ))}
               </tr>
@@ -563,7 +564,7 @@ export default function SalesPage() {
                       <td className="px-4 py-3 font-body text-[13px] text-foreground">{s.date}</td>
                       <td className="px-4 py-3 font-body text-[13px] text-foreground">{getMatchLabel(s.matchId)}</td>
                       <td className="px-4 py-3 font-body text-[13px] font-medium text-foreground">{s.client}</td>
-                      <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">{s.contract}</td>
+                      <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">{s.contract || s.invoiceNumber || '—'}</td>
                       <td className="px-4 py-3">
                         <span className="px-2 py-0.5 rounded-full bg-muted font-body text-[11px] font-medium text-foreground">
                           {effectiveLines.length} lines
