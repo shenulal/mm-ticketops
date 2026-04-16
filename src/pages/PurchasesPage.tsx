@@ -1031,8 +1031,12 @@ export default function PurchasesPage() {
                       const stats = lineUnitStats(li.id);
                       const allocPct = stats.total > 0 ? (stats.allocated / stats.total) * 100 : 0;
                       const sgName = isMultiSg ? getSubGameName(li.subGameId) : '—';
+                      const lineSets = getTicketSets(li.subGameId, li.categoryId).filter(s => s.lineItemId === li.id);
+                      const availSets = lineSets.filter(s => s.available > 0);
+                      const setBreakdown = availSets.map(s => String(s.available)).join(' + ') || '0';
                       return (
-                        <tr key={li.id} className="bg-muted/50 border-b border-border/50">
+                        <Fragment key={li.id}>
+                        <tr className="bg-muted/50 border-b border-border/50">
                           <td className="px-4 py-2.5"><div className="flex items-center justify-center"><div className="w-px h-full bg-border" /></div></td>
                           <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-primary/10 text-primary">L{liIdx + 1}</span></td>
                           <td className="px-4 py-2.5 font-body text-[12px] text-muted-foreground">{sgName}</td>
@@ -1060,6 +1064,28 @@ export default function PurchasesPage() {
                             </div>
                           </td>
                         </tr>
+                        {/* Ticket set breakdown row */}
+                        <tr className="bg-muted/30 border-b border-border/30">
+                          <td />
+                          <td colSpan={10} className="px-4 py-1.5" style={{ paddingLeft: 56 }}>
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <span className="font-body text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Sets:</span>
+                              {lineSets.map(ts => (
+                                <span key={ts.setId} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-border bg-card">
+                                  <span className="font-mono text-[10px] font-bold text-primary">{ts.setId}</span>
+                                  <span className="font-body text-[10px] text-muted-foreground">
+                                    {ts.totalSize} total · <span className="text-success">{ts.available} avail</span> · <span className="text-warning">{ts.allocated} alloc</span>
+                                  </span>
+                                  {ts.units[0]?.block && <span className="font-mono text-[9px] text-muted-foreground">Blk {ts.block}</span>}
+                                </span>
+                              ))}
+                              <span className="font-body text-[10px] text-muted-foreground ml-2">
+                                Remaining: <span className="font-mono font-bold text-success">{setBreakdown}</span>
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                        </Fragment>
                       );
                     })}
                   </Fragment>
