@@ -420,6 +420,7 @@ export default function DistributionPage() {
           const { saleId, lineItem, lineIdx } = allocatorCtx;
           const sale = MOCK_SALES.find(s => s.id === saleId);
           const sgName = getSubGameName(lineItem.subGameId);
+          const vendorInventory = getInventoryByVendor(lineItem.subGameId, lineItem.categoryId);
           const availableUnits = MOCK_UNITS.filter(u => u.subGameId === lineItem.subGameId && u.categoryId === lineItem.categoryId && u.status === 'AVAILABLE');
           const vendorBlocks = Object.entries(
             availableUnits.reduce<Record<string, typeof availableUnits>>((acc, u) => {
@@ -428,6 +429,7 @@ export default function DistributionPage() {
               return acc;
             }, {})
           );
+          const allocatedUnits = getAllocatedUnitsForSaleLine(lineItem.id);
 
           return (
             <div className="fixed inset-0 z-50 flex justify-end">
