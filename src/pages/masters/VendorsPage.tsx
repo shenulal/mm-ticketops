@@ -165,6 +165,10 @@ function VendorDrawer({ vendor, onClose }: { vendor: Vendor; onClose: () => void
           )}
 
           <div className="mt-6 flex gap-3">
+            <button onClick={() => window.location.href = `/masters/vendors/${vendor.id}`}
+              className="px-4 py-2 rounded-xl text-[13px] font-body font-medium bg-primary/10 text-primary hover:bg-primary/20">
+              View Full History →
+            </button>
             <button onClick={() => { ctx.updateVendor(vendor.id, { isActive: !vendor.isActive }); toast.success(`Vendor ${vendor.isActive ? 'deactivated' : 'activated'}`); onClose(); }}
               className={`px-4 py-2 rounded-xl text-[13px] font-body font-medium ${vendor.isActive ? 'bg-destructive/10 text-destructive hover:bg-destructive/20' : 'bg-success/10 text-success hover:bg-success/20'}`}>
               {vendor.isActive ? 'Deactivate' : 'Activate'}
