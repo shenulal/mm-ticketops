@@ -206,8 +206,8 @@ function UnitDetailDrawer({ unit, onClose, onReplace }: {
               <span className="font-body text-[13px] font-bold text-foreground">Delivery</span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-              <div><p className={labelCls}>Block</p><p className={valCls}>{task?.block || '—'}</p></div>
-              <div><p className={labelCls}>Row / Seat</p><p className={valCls}>{task ? `${task.row || '—'} / ${task.seat || '—'}` : '—'}</p></div>
+              <div><p className={labelCls}>Block</p><p className={valCls}>{unit.block || '—'}</p></div>
+              <div><p className={labelCls}>Row / Seat</p><p className={valCls}>{unit.row || '—'} / {unit.seat || '—'}</p></div>
               <div><p className={labelCls}>Dispatch Status</p><p className={valCls}>{dist?.dispatchStatus ?? 'NOT_SENT'}</p></div>
               <div><p className={labelCls}>Dispatched At</p><p className={valCls}>{task?.dispatchedAt ?? '—'}</p></div>
               <div><p className={labelCls}>Assigned Staff</p><p className={valCls}>{task ? 'Mohammed Hassan' : '—'}</p></div>
@@ -578,13 +578,14 @@ function UnitDrawer({ mode, onClose, onUnitClick, onBulkCancel }: {
                         <button key={u.id} onClick={() => onUnitClick(u)}
                           className="rounded-lg p-1.5 flex flex-col items-center justify-center text-center cursor-pointer transition-shadow hover:shadow-md hover:ring-1 hover:ring-accent"
                           style={{
-                            width: 72, height: 60,
-                            backgroundColor: isAlloc ? 'hsl(var(--success-bg))' : 'hsl(var(--warning-bg))',
-                            border: `1.5px solid ${isAlloc ? 'hsl(var(--success))' : 'hsl(var(--warning))'}`,
-                            color: isAlloc ? '#065F46' : '#92400E',
+                            width: 80, height: 68,
+                            backgroundColor: u.status === 'CANCELLED' ? 'hsl(var(--destructive) / 0.08)' : u.status === 'REPLACED' ? 'hsl(var(--muted))' : isAlloc ? 'hsl(var(--success-bg))' : 'hsl(var(--warning-bg))',
+                            border: `1.5px solid ${u.status === 'CANCELLED' || u.status === 'REPLACED' ? 'hsl(var(--destructive) / 0.3)' : isAlloc ? 'hsl(var(--success))' : 'hsl(var(--warning))'}`,
+                            color: u.status === 'CANCELLED' || u.status === 'REPLACED' ? 'hsl(var(--destructive))' : isAlloc ? '#065F46' : '#92400E',
                           }}>
                           <span className="font-mono text-[10px] font-bold">{u.id}</span>
-                          <span className="font-body text-[9px] mt-0.5">{isAlloc ? 'ALLOC' : `AVAIL · Pos ${u.setPos}`}</span>
+                          <span className="font-body text-[8px] mt-0.5">{u.block && u.seat ? `${u.block}-${u.row}-${u.seat}` : `Pos ${u.setPos}`}</span>
+                          <span className="font-body text-[8px]">{u.status === 'CANCELLED' ? 'CNCL' : u.status === 'REPLACED' ? 'REPL' : isAlloc ? 'ALLOC' : 'AVAIL'}</span>
                         </button>
                       );
                     })}
