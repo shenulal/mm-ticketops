@@ -301,7 +301,25 @@ export default function DistributionPage() {
                               <div className="flex gap-2">
                                 {isPending ? (
                                   <button onClick={() => setOversellCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx })} className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
-                                ) : li.status !== 'ALLOCATED' && li.status !== 'FULFILLED' ? (
+                                ) : li.status === 'ALLOCATED' ? (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setAllocatedLineIds(prev => { const next = new Set(prev); next.delete(li.id); return next; });
+                                      }}
+                                      className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-destructive/10 text-destructive hover:bg-destructive/20">
+                                      Unallocate
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setAllocatedLineIds(prev => { const next = new Set(prev); next.delete(li.id); return next; });
+                                        setAllocatorCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx });
+                                      }}
+                                      className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning/10 text-warning hover:bg-warning/20">
+                                      Reallocate
+                                    </button>
+                                  </>
+                                ) : li.status !== 'FULFILLED' ? (
                                   <button
                                     onClick={() => navigate(`/distribution/${s.id}/preview`)}
                                     className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-accent text-accent-foreground hover:opacity-90">
