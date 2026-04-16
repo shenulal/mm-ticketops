@@ -5,7 +5,7 @@ import { useAppContext } from '@/context/AppContext';
 import { useEvent } from '@/context/EventContext';
 import {
   MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_MATCHES, MOCK_SUBGAMES, MOCK_UNITS, MOCK_DIST_ROWS,
-  getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable,
+  getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable, getAllocatedUnitsForSaleLine,
   type SaleLineItem,
 } from '@/data/mockData';
 import { useContextHelpers } from '@/hooks/useContextHelpers';
@@ -596,8 +596,12 @@ export default function SalesPage() {
                       const lineSt = STATUS_STYLE[li.status] || STATUS_STYLE['UNALLOCATED'];
                       const sgName = isMultiSg ? getSubGameName(li.subGameId) : '—';
                       const isOversell = li.oversellFlag && !approvedLines.has(li.id);
+                      const allocatedUnits = getAllocatedUnitsForSaleLine(li.id);
+                      const vendorSources = [...new Set(allocatedUnits.map(u => u.vendor))];
+                      const setIds = [...new Set(allocatedUnits.map(u => u.setId))];
                       return (
-                        <tr key={li.id} className={`border-b border-border/50 ${isOversell ? 'bg-warning/5' : 'bg-muted/50'}`}>
+                        <Fragment key={li.id}>
+                        <tr className={`border-b border-border/50 ${isOversell ? 'bg-warning/5' : 'bg-muted/50'}`}>
                           <td className="px-4 py-2.5"><div className="flex items-center justify-center"><div className="w-px h-full bg-border" /></div></td>
                           <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-primary/10 text-primary">L{liIdx + 1}</span></td>
                           <td className="px-4 py-2.5 font-body text-[12px] text-muted-foreground">{sgName}</td>
@@ -630,6 +634,32 @@ export default function SalesPage() {
                             </div>
                           </td>
                         </tr>
+                        {/* Traceability row: show purchase source */}
+                        {allocatedUnits.length > 0 && (
+                          <tr className="bg-muted/30 border-b border-border/30">
+                            <td />
+                            <td colSpan={10} className="px-4 py-1.5" style={{ paddingLeft: 56 }}>
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <span className="font-body text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Source:</span>
+                                {setIds.map(sid => {
+                                  const setUnits = allocatedUnits.filter(u => u.setId === sid);
+                                  const first = setUnits[0];
+                                  return (
+                                    <span key={sid} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-border bg-card">
+                                      <span className="font-mono text-[10px] font-bold text-primary">{sid}</span>
+                                      <span className="font-body text-[10px] text-muted-foreground">{first.vendor} · {setUnits.length} units</span>
+                                      {first.block && <span className="font-mono text-[9px] text-muted-foreground">Blk {first.block}</span>}
+                                    </span>
+                                  );
+                                })}
+                                <span className="font-mono text-[10px] text-muted-foreground">
+                                  Units: {allocatedUnits.slice(0, 5).map(u => u.id).join(', ')}{allocatedUnits.length > 5 ? ` +${allocatedUnits.length - 5} more` : ''}
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        </Fragment>
                       );
                     })}
                   </Fragment>
