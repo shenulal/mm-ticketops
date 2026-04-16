@@ -6,7 +6,7 @@ export interface AppUser {
   email: string;
   role: UserRole;
   initials: string;
-  vendorGroups?: string[]; // supplier-only: which vendor groups they can see
+  vendorGroups?: string[];
 }
 
 export const MOCK_USERS: AppUser[] = [
@@ -215,6 +215,7 @@ export interface Sale {
   id: string;
   client: string;
   contract: string;
+  invoiceNumber: string;
   matchId: string;
   date: string;
   notes: string;
@@ -226,8 +227,8 @@ export interface Sale {
 
 export const MOCK_SALES: Sale[] = [
   {
-    id: 'sale001', client: 'Meridian Travel', contract: '2025-10885', matchId: 'm01',
-    date: '16 Apr 2026', notes: '',
+    id: 'sale001', client: 'Meridian Travel', contract: '2025-10885', invoiceNumber: 'INV-2026-0401',
+    matchId: 'm01', date: '16 Apr 2026', notes: '',
     get lines() { return MOCK_SALE_LINE_ITEMS.filter(l => l.saleId === 'sale001'); },
     get totalQty() { return this.lines.reduce((s, l) => s + l.qty, 0); },
     get totalValue() { return this.lines.reduce((s, l) => s + l.lineTotal, 0); },
@@ -240,8 +241,8 @@ export const MOCK_SALES: Sale[] = [
     },
   },
   {
-    id: 'sale002', client: 'Apex Holdings', contract: '2025-20001', matchId: 'sg-weekend',
-    date: '16 Apr 2026', notes: 'F1 Singapore package',
+    id: 'sale002', client: 'Apex Holdings', contract: '', invoiceNumber: 'INV-2026-0402',
+    matchId: 'sg-weekend', date: '16 Apr 2026', notes: 'F1 Singapore package',
     get lines() { return MOCK_SALE_LINE_ITEMS.filter(l => l.saleId === 'sale002'); },
     get totalQty() { return this.lines.reduce((s, l) => s + l.qty, 0); },
     get totalValue() { return this.lines.reduce((s, l) => s + l.lineTotal, 0); },
@@ -250,6 +251,8 @@ export const MOCK_SALES: Sale[] = [
 ];
 
 // === UNITS ===
+
+export type UnitStatus = 'ALLOCATED' | 'AVAILABLE' | 'CANCELLED' | 'REPLACED';
 
 export interface PurchaseUnit {
   id: string;
@@ -264,42 +267,185 @@ export interface PurchaseUnit {
   vendor: string;
   contract: string;
   matchId: string;
-  status: 'ALLOCATED' | 'AVAILABLE';
+  block: string;
+  row: string;
+  seat: string;
+  status: UnitStatus;
   allocatedToLineItemId: string | null;
+  replacedByUnitId: string | null;
+  cancelledReason: string | null;
+}
+
+// Generate realistic multi-set units for PUR-001 Line 1 (Top Cat 1 × 43)
+// Sets: 12 + 10 + 10 + 6 + 5 = 43
+const PUR1_L1_SETS = [
+  { setId: 'PR001-L1-S01', size: 12, block: 'C', rowStart: '12', seatStart: 14 },
+  { setId: 'PR001-L1-S02', size: 10, block: 'C', rowStart: '13', seatStart: 1 },
+  { setId: 'PR001-L1-S03', size: 10, block: 'C', rowStart: '13', seatStart: 11 },
+  { setId: 'PR001-L1-S04', size: 6, block: 'D', rowStart: '1', seatStart: 1 },
+  { setId: 'PR001-L1-S05', size: 5, block: 'D', rowStart: '1', seatStart: 7 },
+];
+
+// PUR-001 Line 2 (Cat 2 × 100): Sets of 20+20+20+20+10+10 = 100
+const PUR1_L2_SETS = [
+  { setId: 'PR001-L2-S01', size: 20, block: 'E', rowStart: '1', seatStart: 1 },
+  { setId: 'PR001-L2-S02', size: 20, block: 'E', rowStart: '1', seatStart: 21 },
+  { setId: 'PR001-L2-S03', size: 20, block: 'E', rowStart: '2', seatStart: 1 },
+  { setId: 'PR001-L2-S04', size: 20, block: 'E', rowStart: '2', seatStart: 21 },
+  { setId: 'PR001-L2-S05', size: 10, block: 'F', rowStart: '1', seatStart: 1 },
+  { setId: 'PR001-L2-S06', size: 10, block: 'F', rowStart: '1', seatStart: 11 },
+];
+
+// PUR-001 Line 3 (Cat 3 × 60): Sets of 20+20+10+10 = 60
+const PUR1_L3_SETS = [
+  { setId: 'PR001-L3-S01', size: 20, block: 'G', rowStart: '1', seatStart: 1 },
+  { setId: 'PR001-L3-S02', size: 20, block: 'G', rowStart: '1', seatStart: 21 },
+  { setId: 'PR001-L3-S03', size: 10, block: 'G', rowStart: '2', seatStart: 1 },
+  { setId: 'PR001-L3-S04', size: 10, block: 'G', rowStart: '2', seatStart: 11 },
+];
+
+function generateUnits(
+  lineId: string, purchaseId: string, subGameId: string, categoryId: string, categoryLabel: string,
+  vendor: string, contract: string, matchId: string,
+  sets: { setId: string; size: number; block: string; rowStart: string; seatStart: number }[],
+  startIdx: number,
+  allocations: { lineItemId: string; count: number }[] = [],
+): PurchaseUnit[] {
+  const units: PurchaseUnit[] = [];
+  let globalIdx = startIdx;
+  let allocRemaining = [...allocations];
+
+  for (const set of sets) {
+    for (let pos = 0; pos < set.size; pos++) {
+      let allocTo: string | null = null;
+      for (const alloc of allocRemaining) {
+        if (alloc.count > 0) {
+          allocTo = alloc.lineItemId;
+          alloc.count--;
+          break;
+        }
+      }
+      units.push({
+        id: `P${String(globalIdx).padStart(5, '0')}`,
+        purchaseId, lineItemId: lineId, subGameId, categoryId, categoryLabel,
+        setId: set.setId, setSize: set.size, setPos: pos + 1,
+        vendor, contract, matchId,
+        block: set.block, row: set.rowStart, seat: String(set.seatStart + pos),
+        status: allocTo ? 'ALLOCATED' : 'AVAILABLE',
+        allocatedToLineItemId: allocTo,
+        replacedByUnitId: null,
+        cancelledReason: null,
+      });
+      globalIdx++;
+    }
+  }
+  return units;
 }
 
 export const MOCK_UNITS: PurchaseUnit[] = [
-  // PUR-001, Line 1: Top Cat 1 × 43
-  ...Array.from({ length: 43 }, (_, i) => ({
-    id: `P${String(i + 1).padStart(5, '0')}`,
-    purchaseId: 'pur1', lineItemId: 'pli-1-1',
-    subGameId: 'sg-m01-main', categoryId: 'topcat1', categoryLabel: 'Top Cat 1',
-    setId: 'PR001-L1-S01', setSize: 43, setPos: i + 1,
-    vendor: 'TicketVault', contract: '2025-100129', matchId: 'm01',
-    status: (i < 12 ? 'ALLOCATED' : 'AVAILABLE') as 'ALLOCATED' | 'AVAILABLE',
-    allocatedToLineItemId: i < 12 ? 'sli-1-1' : null,
-  })),
-  // PUR-001, Line 2: Cat 2 × 100
-  ...Array.from({ length: 100 }, (_, i) => ({
-    id: `P${String(i + 44).padStart(5, '0')}`,
-    purchaseId: 'pur1', lineItemId: 'pli-1-2',
-    subGameId: 'sg-m01-main', categoryId: 'cat2', categoryLabel: 'Cat 2',
-    setId: 'PR001-L2-S01', setSize: 100, setPos: i + 1,
-    vendor: 'TicketVault', contract: '2025-100129', matchId: 'm01',
-    status: (i < 6 ? 'ALLOCATED' : 'AVAILABLE') as 'ALLOCATED' | 'AVAILABLE',
-    allocatedToLineItemId: i < 6 ? 'sli-1-2' : null,
-  })),
-  // PUR-001, Line 3: Cat 3 × 60
-  ...Array.from({ length: 60 }, (_, i) => ({
-    id: `P${String(i + 144).padStart(5, '0')}`,
-    purchaseId: 'pur1', lineItemId: 'pli-1-3',
-    subGameId: 'sg-m01-main', categoryId: 'cat3', categoryLabel: 'Cat 3',
-    setId: 'PR001-L3-S01', setSize: 60, setPos: i + 1,
-    vendor: 'TicketVault', contract: '2025-100129', matchId: 'm01',
-    status: (i < 20 ? 'ALLOCATED' : 'AVAILABLE') as 'ALLOCATED' | 'AVAILABLE',
-    allocatedToLineItemId: i < 20 ? 'sli-1-3' : null,
-  })),
+  // PUR-001, Line 1: Top Cat 1 × 43 (12 allocated to sli-1-1)
+  ...generateUnits('pli-1-1', 'pur1', 'sg-m01-main', 'topcat1', 'Top Cat 1',
+    'TicketVault', '2025-100129', 'm01', PUR1_L1_SETS, 1,
+    [{ lineItemId: 'sli-1-1', count: 12 }]),
+  // PUR-001, Line 2: Cat 2 × 100 (6 allocated to sli-1-2)
+  ...generateUnits('pli-1-2', 'pur1', 'sg-m01-main', 'cat2', 'Cat 2',
+    'TicketVault', '2025-100129', 'm01', PUR1_L2_SETS, 44,
+    [{ lineItemId: 'sli-1-2', count: 6 }]),
+  // PUR-001, Line 3: Cat 3 × 60 (20 allocated to sli-1-3)
+  ...generateUnits('pli-1-3', 'pur1', 'sg-m01-main', 'cat3', 'Cat 3',
+    'TicketVault', '2025-100129', 'm01', PUR1_L3_SETS, 144,
+    [{ lineItemId: 'sli-1-3', count: 20 }]),
 ];
+
+// === TICKET SET HELPERS ===
+
+export interface TicketSet {
+  setId: string;
+  vendor: string;
+  purchaseId: string;
+  lineItemId: string;
+  subGameId: string;
+  categoryId: string;
+  categoryLabel: string;
+  block: string;
+  row: string;
+  totalSize: number;
+  available: number;
+  allocated: number;
+  cancelled: number;
+  units: PurchaseUnit[];
+}
+
+export function getTicketSets(subGameId?: string, categoryId?: string): TicketSet[] {
+  const filtered = MOCK_UNITS.filter(u =>
+    (!subGameId || u.subGameId === subGameId) &&
+    (!categoryId || u.categoryId === categoryId)
+  );
+  const grouped: Record<string, PurchaseUnit[]> = {};
+  for (const u of filtered) {
+    (grouped[u.setId] = grouped[u.setId] || []).push(u);
+  }
+  return Object.entries(grouped).map(([setId, units]) => {
+    const first = units[0];
+    return {
+      setId,
+      vendor: first.vendor,
+      purchaseId: first.purchaseId,
+      lineItemId: first.lineItemId,
+      subGameId: first.subGameId,
+      categoryId: first.categoryId,
+      categoryLabel: first.categoryLabel,
+      block: first.block,
+      row: first.row,
+      totalSize: units.length,
+      available: units.filter(u => u.status === 'AVAILABLE').length,
+      allocated: units.filter(u => u.status === 'ALLOCATED').length,
+      cancelled: units.filter(u => u.status === 'CANCELLED' || u.status === 'REPLACED').length,
+      units,
+    };
+  });
+}
+
+export interface VendorInventory {
+  vendor: string;
+  subGameId: string;
+  categoryId: string;
+  categoryLabel: string;
+  totalUnits: number;
+  availableUnits: number;
+  sets: TicketSet[];
+  setBreakdown: string; // e.g. "4 + 4 + 2"
+}
+
+export function getInventoryByVendor(subGameId: string, categoryId: string): VendorInventory[] {
+  const sets = getTicketSets(subGameId, categoryId);
+  const byVendor: Record<string, TicketSet[]> = {};
+  for (const s of sets) {
+    (byVendor[s.vendor] = byVendor[s.vendor] || []).push(s);
+  }
+  return Object.entries(byVendor).map(([vendor, vendorSets]) => {
+    const availSets = vendorSets.filter(s => s.available > 0);
+    return {
+      vendor,
+      subGameId,
+      categoryId,
+      categoryLabel: vendorSets[0].categoryLabel,
+      totalUnits: vendorSets.reduce((s, ts) => s + ts.totalSize, 0),
+      availableUnits: vendorSets.reduce((s, ts) => s + ts.available, 0),
+      sets: vendorSets,
+      setBreakdown: availSets.map(s => String(s.available)).join(' + ') || '0',
+    };
+  });
+}
+
+export function getAvailableUnitsFromSet(setId: string): PurchaseUnit[] {
+  return MOCK_UNITS.filter(u => u.setId === setId && u.status === 'AVAILABLE')
+    .sort((a, b) => a.setPos - b.setPos);
+}
+
+export function getAllocatedUnitsForSaleLine(saleLineId: string): PurchaseUnit[] {
+  return MOCK_UNITS.filter(u => u.allocatedToLineItemId === saleLineId);
+}
 
 // === DISTRIBUTION ROWS ===
 
@@ -369,6 +515,7 @@ export function getInventorySummary(subGameId?: string, categoryId?: string) {
     total:      units.length,
     available:  units.filter(u => u.status === 'AVAILABLE').length,
     allocated:  units.filter(u => u.status === 'ALLOCATED').length,
+    cancelled:  units.filter(u => u.status === 'CANCELLED' || u.status === 'REPLACED').length,
     dispatched: MOCK_DIST_ROWS.filter(r =>
       r.dispatchStatus === 'SENT' &&
       (!subGameId || r.subGameId === subGameId) &&
@@ -536,7 +683,7 @@ export interface StaffTask {
   invNo: string;
   vendorLogin: string;
   vendorEmail: string;
-  vendorPassword: string; // stored encrypted; masked in UI
+  vendorPassword: string;
   contractNo: string;
   clientFirstName: string;
   clientLastName: string;
@@ -591,7 +738,7 @@ export const MOCK_STAFF_TASKS: StaffTask[] = [
     vendorLogin: 'clara@cc.WC#20', vendorEmail: 'clara@ticketvault.com', vendorPassword: 'X!k9Lm#2q', contractNo: '2025-100129',
     clientFirstName: 'Robert', clientLastName: 'Chen', clientEmail: 'r.chen@meridiantravel.ae', clientPhone: '', clientNotes: 'Wheelchair accessible required',
     matchCode: 'M01', matchLabel: 'MEX v RSA', category: 'Top Cat 1', sets: 1, qty: 1,
-    block: '', row: '', seat: '',
+    block: 'C', row: '12', seat: '16',
     assignedTo: 'u5', status: 'NOT_SENT', priority: 'High', dispatchedAt: null, proofUrl: null, staffNote: '',
     activityLog: [
       { action: 'CREATED', actor: 'Sara Al Mansoori', at: '16 Apr 2026 09:00' },
