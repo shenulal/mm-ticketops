@@ -8,7 +8,7 @@ import RoleGuard from '@/components/RoleGuard';
 import {
   MOCK_PURCHASES, MOCK_UNITS, MOCK_PURCHASE_LINE_ITEMS, MOCK_MATCHES, MOCK_SUBGAMES,
   MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_DIST_ROWS, MOCK_STAFF_TASKS,
-  hasMultipleSubGames, getSubGamesForMatch,
+  hasMultipleSubGames, getSubGamesForMatch, getTicketSets,
   type PurchaseLineItem, type PurchaseUnit,
 } from '@/data/mockData';
 import { addAuditEntry } from '@/data/auditData';
