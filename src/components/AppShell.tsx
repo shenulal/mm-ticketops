@@ -162,9 +162,10 @@ function getPageTitle(pathname: string): string {
   }
   if (pathname.startsWith('/settings')) return 'Settings';
   if (pathname.startsWith('/events/')) return 'Event Detail';
+  if (pathname.startsWith('/masters/clients/')) return 'Client Detail';
+  if (pathname.startsWith('/masters/vendors/')) return 'Vendor Detail';
   if (pathname.startsWith('/distribution/')) return 'Distribution';
   if (pathname.startsWith('/staff-queue/')) return 'Task Detail';
-  return 'TicketOps';
   return 'TicketOps';
 }
 

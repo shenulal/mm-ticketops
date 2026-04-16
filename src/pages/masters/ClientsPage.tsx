@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext, type Client } from '@/context/AppContext';
 import MasterPage, { FieldRow, SectionHeading, StatusBadge, TypeBadge, FormField, inputCls, selectCls, textareaCls, type ColumnDef, type FilterDef } from '@/components/MasterPage';
 import { toast } from 'sonner';
@@ -151,6 +152,10 @@ function ClientDrawer({ client, onClose }: { client: Client; onClose: () => void
       )}
 
       <div className="mt-6 flex gap-3">
+        <button onClick={() => window.location.href = `/masters/clients/${client.id}`}
+          className="px-4 py-2 rounded-xl text-[13px] font-body font-medium bg-primary/10 text-primary hover:bg-primary/20">
+          View Full History →
+        </button>
         <button onClick={() => { ctx.updateClient(client.id, { isActive: !client.isActive }); toast.success(`Client ${client.isActive ? 'deactivated' : 'activated'}`); onClose(); }}
           className={`px-4 py-2 rounded-xl text-[13px] font-body font-medium ${client.isActive ? 'bg-destructive/10 text-destructive hover:bg-destructive/20' : 'bg-success/10 text-success hover:bg-success/20'}`}>
           {client.isActive ? 'Deactivate' : 'Activate'}
