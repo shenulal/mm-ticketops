@@ -644,11 +644,15 @@ export default function SalesPage() {
                                 {setIds.map(sid => {
                                   const setUnits = allocatedUnits.filter(u => u.setId === sid);
                                   const first = setUnits[0];
+                                  const purIdx = MOCK_PURCHASES.findIndex(p => p.id === first.purchaseId) + 1;
+                                  const purLabel = `PUR-${String(purIdx).padStart(3, '0')}`;
                                   return (
                                     <span key={sid} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-border bg-card">
+                                      <span className="font-mono text-[10px] font-bold text-primary">{purLabel}</span>
+                                      <span className="font-mono text-[10px] text-muted-foreground">→</span>
                                       <span className="font-mono text-[10px] font-bold text-primary">{sid}</span>
-                                      <span className="font-body text-[10px] text-muted-foreground">{first.vendor} · {setUnits.length} units</span>
-                                      {first.block && <span className="font-mono text-[9px] text-muted-foreground">Blk {first.block}</span>}
+                                      <span className="font-body text-[10px] text-muted-foreground">{first.vendor} · {first.contract} · {setUnits.length} units</span>
+                                      {first.block && <span className="font-mono text-[9px] text-muted-foreground">Blk {first.block} R{first.row}</span>}
                                     </span>
                                   );
                                 })}
