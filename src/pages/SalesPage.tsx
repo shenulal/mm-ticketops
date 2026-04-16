@@ -4,7 +4,7 @@ import RoleGuard from '@/components/RoleGuard';
 import { useAppContext } from '@/context/AppContext';
 import { useEvent } from '@/context/EventContext';
 import {
-  MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_MATCHES, MOCK_SUBGAMES, MOCK_UNITS, MOCK_DIST_ROWS,
+  MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_MATCHES, MOCK_SUBGAMES, MOCK_UNITS, MOCK_DIST_ROWS, MOCK_PURCHASES,
   getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable, getAllocatedUnitsForSaleLine,
   type SaleLineItem,
 } from '@/data/mockData';
