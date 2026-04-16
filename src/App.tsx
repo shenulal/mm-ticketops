@@ -40,6 +40,8 @@ import SupplierSettingsPage from "@/pages/supplier/SupplierSettingsPage";
 // Master Data
 import VendorsPage from "@/pages/masters/VendorsPage";
 import ClientsPage from "@/pages/masters/ClientsPage";
+import ClientDetailPage from "@/pages/masters/ClientDetailPage";
+import VendorDetailPage from "@/pages/masters/VendorDetailPage";
 import ContractsPage from "@/pages/masters/ContractsPage";
 import VenuesPage from "@/pages/masters/VenuesPage";
 import CurrenciesPage from "@/pages/masters/CurrenciesPage";
@@ -153,8 +155,14 @@ const App = () => (
                 <Route path="/masters/vendors" element={
                   <RoleProtectedRoute allowedRoles={MASTER_ROLES}><VendorsPage /></RoleProtectedRoute>
                 } />
+                <Route path="/masters/vendors/:id" element={
+                  <RoleProtectedRoute allowedRoles={MASTER_ROLES}><VendorDetailPage /></RoleProtectedRoute>
+                } />
                 <Route path="/masters/clients" element={
                   <RoleProtectedRoute allowedRoles={MASTER_ROLES}><ClientsPage /></RoleProtectedRoute>
+                } />
+                <Route path="/masters/clients/:id" element={
+                  <RoleProtectedRoute allowedRoles={MASTER_ROLES}><ClientDetailPage /></RoleProtectedRoute>
                 } />
                 <Route path="/masters/contracts" element={
                   <RoleProtectedRoute allowedRoles={MASTER_ROLES}><ContractsPage /></RoleProtectedRoute>
