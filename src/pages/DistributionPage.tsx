@@ -5,6 +5,7 @@ import { useEvent } from '@/context/EventContext';
 import {
   MOCK_SALES, MOCK_MATCHES, MOCK_DIST_ROWS, MOCK_UNITS, MOCK_SUBGAMES,
   getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable,
+  getInventoryByVendor, getAllocatedUnitsForSaleLine, getAvailableUnitsFromSet,
   type SaleLineItem, type DistRow,
 } from '@/data/mockData';
 import { useContextHelpers } from '@/hooks/useContextHelpers';
