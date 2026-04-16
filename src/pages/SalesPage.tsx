@@ -305,7 +305,11 @@ function SaleEditModal({ saleId, onClose, onSave }: {
               </div>
               <div>
                 <label className="font-body text-sm font-medium text-foreground block mb-1">Contract</label>
-                <input value={contract} onChange={e => setContract(e.target.value)} className={inputCls} />
+                <input value={contract} onChange={e => setContract(e.target.value)} className={inputCls} placeholder="Optional if invoice provided" />
+              </div>
+              <div>
+                <label className="font-body text-sm font-medium text-foreground block mb-1">Invoice Number</label>
+                <input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} className={inputCls} placeholder="e.g. INV-2026-0401" />
               </div>
               <div>
                 <label className="font-body text-sm font-medium text-foreground block mb-1">Sale Date</label>
