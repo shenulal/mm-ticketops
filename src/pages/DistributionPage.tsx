@@ -5,6 +5,7 @@ import { useEvent } from '@/context/EventContext';
 import {
   MOCK_SALES, MOCK_MATCHES, MOCK_DIST_ROWS, MOCK_UNITS, MOCK_SUBGAMES,
   getSubGamesForMatch, hasMultipleSubGames, getInventoryAvailable,
+  getInventoryByVendor, getAllocatedUnitsForSaleLine, getAvailableUnitsFromSet,
   type SaleLineItem, type DistRow,
 } from '@/data/mockData';
 import { useContextHelpers } from '@/hooks/useContextHelpers';
@@ -300,7 +301,25 @@ export default function DistributionPage() {
                               <div className="flex gap-2">
                                 {isPending ? (
                                   <button onClick={() => setOversellCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx })} className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning text-primary-foreground hover:opacity-90">Review</button>
-                                ) : li.status !== 'ALLOCATED' && li.status !== 'FULFILLED' ? (
+                                ) : li.status === 'ALLOCATED' ? (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setAllocatedLineIds(prev => { const next = new Set(prev); next.delete(li.id); return next; });
+                                      }}
+                                      className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-destructive/10 text-destructive hover:bg-destructive/20">
+                                      Unallocate
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setAllocatedLineIds(prev => { const next = new Set(prev); next.delete(li.id); return next; });
+                                        setAllocatorCtx({ saleId: s.id, lineItem: li, lineIdx: liIdx });
+                                      }}
+                                      className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-warning/10 text-warning hover:bg-warning/20">
+                                      Reallocate
+                                    </button>
+                                  </>
+                                ) : li.status !== 'FULFILLED' ? (
                                   <button
                                     onClick={() => navigate(`/distribution/${s.id}/preview`)}
                                     className="px-3 py-1 rounded-lg font-body text-[11px] font-medium bg-accent text-accent-foreground hover:opacity-90">
@@ -336,7 +355,21 @@ export default function DistributionPage() {
                                 <td className="px-4 py-2">
                                   <span className={`px-1.5 py-0.5 rounded-full font-body text-[9px] font-medium ${drSt.cls}`}>{drSt.label}</span>
                                 </td>
-                                <td className="px-4 py-2 font-mono text-[11px] text-foreground">{dr.unitId || '—'}</td>
+                                <td className="px-4 py-2">
+                                  {dr.unitId ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-mono text-[11px] text-foreground">{dr.unitId}</span>
+                                      {(() => {
+                                        const unit = MOCK_UNITS.find(u => u.id === dr.unitId);
+                                        return unit ? (
+                                          <span className="font-mono text-[9px] text-muted-foreground">
+                                            {unit.vendor} · {unit.setId}{unit.block ? ` · ${unit.block}-${unit.row}-${unit.seat}` : ''}
+                                          </span>
+                                        ) : null;
+                                      })()}
+                                    </div>
+                                  ) : <span className="font-mono text-[11px] text-muted-foreground">—</span>}
+                                </td>
                                 <td className="px-4 py-2">
                                   <span className={`px-1.5 py-0.5 rounded-full font-body text-[9px] font-medium ${dispSt.cls}`}>{dispSt.label}</span>
                                 </td>
@@ -401,6 +434,7 @@ export default function DistributionPage() {
           const { saleId, lineItem, lineIdx } = allocatorCtx;
           const sale = MOCK_SALES.find(s => s.id === saleId);
           const sgName = getSubGameName(lineItem.subGameId);
+          const vendorInventory = getInventoryByVendor(lineItem.subGameId, lineItem.categoryId);
           const availableUnits = MOCK_UNITS.filter(u => u.subGameId === lineItem.subGameId && u.categoryId === lineItem.categoryId && u.status === 'AVAILABLE');
           const vendorBlocks = Object.entries(
             availableUnits.reduce<Record<string, typeof availableUnits>>((acc, u) => {
@@ -409,6 +443,7 @@ export default function DistributionPage() {
               return acc;
             }, {})
           );
+          const allocatedUnits = getAllocatedUnitsForSaleLine(lineItem.id);
 
           return (
             <div className="fixed inset-0 z-50 flex justify-end">
@@ -444,6 +479,22 @@ export default function DistributionPage() {
                           </div>
                         ))}
                       </div>
+
+                      {/* Vendor Inventory Summary */}
+                      {vendorInventory.length > 0 && (
+                        <div className="rounded-lg p-3 border border-border bg-card space-y-2">
+                          <p className="font-body text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Inventory by Vendor</p>
+                          {vendorInventory.map(vi => (
+                            <div key={vi.vendor} className="flex items-center justify-between">
+                              <span className="font-body text-[13px] font-medium text-foreground">{vi.vendor}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[12px] text-success font-bold">{vi.availableUnits} avail</span>
+                                <span className="font-body text-[10px] text-muted-foreground">Sets: {vi.setBreakdown}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Section B: Vendor Blocks */}
                       <div>

@@ -8,7 +8,7 @@ import RoleGuard from '@/components/RoleGuard';
 import {
   MOCK_PURCHASES, MOCK_UNITS, MOCK_PURCHASE_LINE_ITEMS, MOCK_MATCHES, MOCK_SUBGAMES,
   MOCK_SALES, MOCK_SALE_LINE_ITEMS, MOCK_DIST_ROWS, MOCK_STAFF_TASKS,
-  hasMultipleSubGames, getSubGamesForMatch,
+  hasMultipleSubGames, getSubGamesForMatch, getTicketSets,
   type PurchaseLineItem, type PurchaseUnit,
 } from '@/data/mockData';
 import { addAuditEntry } from '@/data/auditData';
@@ -206,8 +206,8 @@ function UnitDetailDrawer({ unit, onClose, onReplace }: {
               <span className="font-body text-[13px] font-bold text-foreground">Delivery</span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-              <div><p className={labelCls}>Block</p><p className={valCls}>{task?.block || '—'}</p></div>
-              <div><p className={labelCls}>Row / Seat</p><p className={valCls}>{task ? `${task.row || '—'} / ${task.seat || '—'}` : '—'}</p></div>
+              <div><p className={labelCls}>Block</p><p className={valCls}>{unit.block || '—'}</p></div>
+              <div><p className={labelCls}>Row / Seat</p><p className={valCls}>{unit.row || '—'} / {unit.seat || '—'}</p></div>
               <div><p className={labelCls}>Dispatch Status</p><p className={valCls}>{dist?.dispatchStatus ?? 'NOT_SENT'}</p></div>
               <div><p className={labelCls}>Dispatched At</p><p className={valCls}>{task?.dispatchedAt ?? '—'}</p></div>
               <div><p className={labelCls}>Assigned Staff</p><p className={valCls}>{task ? 'Mohammed Hassan' : '—'}</p></div>
@@ -578,13 +578,14 @@ function UnitDrawer({ mode, onClose, onUnitClick, onBulkCancel }: {
                         <button key={u.id} onClick={() => onUnitClick(u)}
                           className="rounded-lg p-1.5 flex flex-col items-center justify-center text-center cursor-pointer transition-shadow hover:shadow-md hover:ring-1 hover:ring-accent"
                           style={{
-                            width: 72, height: 60,
-                            backgroundColor: isAlloc ? 'hsl(var(--success-bg))' : 'hsl(var(--warning-bg))',
-                            border: `1.5px solid ${isAlloc ? 'hsl(var(--success))' : 'hsl(var(--warning))'}`,
-                            color: isAlloc ? '#065F46' : '#92400E',
+                            width: 80, height: 68,
+                            backgroundColor: u.status === 'CANCELLED' ? 'hsl(var(--destructive) / 0.08)' : u.status === 'REPLACED' ? 'hsl(var(--muted))' : isAlloc ? 'hsl(var(--success-bg))' : 'hsl(var(--warning-bg))',
+                            border: `1.5px solid ${u.status === 'CANCELLED' || u.status === 'REPLACED' ? 'hsl(var(--destructive) / 0.3)' : isAlloc ? 'hsl(var(--success))' : 'hsl(var(--warning))'}`,
+                            color: u.status === 'CANCELLED' || u.status === 'REPLACED' ? 'hsl(var(--destructive))' : isAlloc ? '#065F46' : '#92400E',
                           }}>
                           <span className="font-mono text-[10px] font-bold">{u.id}</span>
-                          <span className="font-body text-[9px] mt-0.5">{isAlloc ? 'ALLOC' : `AVAIL · Pos ${u.setPos}`}</span>
+                          <span className="font-body text-[8px] mt-0.5">{u.block && u.seat ? `${u.block}-${u.row}-${u.seat}` : `Pos ${u.setPos}`}</span>
+                          <span className="font-body text-[8px]">{u.status === 'CANCELLED' ? 'CNCL' : u.status === 'REPLACED' ? 'REPL' : isAlloc ? 'ALLOC' : 'AVAIL'}</span>
                         </button>
                       );
                     })}
@@ -1030,8 +1031,12 @@ export default function PurchasesPage() {
                       const stats = lineUnitStats(li.id);
                       const allocPct = stats.total > 0 ? (stats.allocated / stats.total) * 100 : 0;
                       const sgName = isMultiSg ? getSubGameName(li.subGameId) : '—';
+                      const lineSets = getTicketSets(li.subGameId, li.categoryId).filter(s => s.lineItemId === li.id);
+                      const availSets = lineSets.filter(s => s.available > 0);
+                      const setBreakdown = availSets.map(s => String(s.available)).join(' + ') || '0';
                       return (
-                        <tr key={li.id} className="bg-muted/50 border-b border-border/50">
+                        <Fragment key={li.id}>
+                        <tr className="bg-muted/50 border-b border-border/50">
                           <td className="px-4 py-2.5"><div className="flex items-center justify-center"><div className="w-px h-full bg-border" /></div></td>
                           <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-primary/10 text-primary">L{liIdx + 1}</span></td>
                           <td className="px-4 py-2.5 font-body text-[12px] text-muted-foreground">{sgName}</td>
@@ -1059,6 +1064,28 @@ export default function PurchasesPage() {
                             </div>
                           </td>
                         </tr>
+                        {/* Ticket set breakdown row */}
+                        <tr className="bg-muted/30 border-b border-border/30">
+                          <td />
+                          <td colSpan={10} className="px-4 py-1.5" style={{ paddingLeft: 56 }}>
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <span className="font-body text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Sets:</span>
+                              {lineSets.map(ts => (
+                                <span key={ts.setId} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-border bg-card">
+                                  <span className="font-mono text-[10px] font-bold text-primary">{ts.setId}</span>
+                                  <span className="font-body text-[10px] text-muted-foreground">
+                                    {ts.totalSize} total · <span className="text-success">{ts.available} avail</span> · <span className="text-warning">{ts.allocated} alloc</span>
+                                  </span>
+                                  {ts.units[0]?.block && <span className="font-mono text-[9px] text-muted-foreground">Blk {ts.block}</span>}
+                                </span>
+                              ))}
+                              <span className="font-body text-[10px] text-muted-foreground ml-2">
+                                Remaining: <span className="font-mono font-bold text-success">{setBreakdown}</span>
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                        </Fragment>
                       );
                     })}
                   </Fragment>
